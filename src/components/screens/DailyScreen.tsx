@@ -6,6 +6,7 @@ import CourtBoard from '../CourtBoard'
 import PokemonHoverCard from '../PokemonHoverCard'
 import PokemonPicker from '../PokemonPicker'
 import RatingBars from '../RatingBars'
+import HighlightReel from '../HighlightReel'
 import ShareImageCard from '../ShareImageCard'
 import { useLineup } from '../../hooks/useLineup'
 import {
@@ -13,6 +14,8 @@ import {
   buildDailyChallenge,
   formatGauntletShare,
   formatSlotLabel,
+  pickSlateReel,
+  resolveGameReel,
   runGauntlet,
   todayKey,
   type GauntletResult,
@@ -101,6 +104,11 @@ export default function DailyScreen() {
       lineup,
     })
     const slateBox = aggregateHomeBox(
+      gauntlet.games,
+      lineup,
+      challenge.cpuLineup,
+    )
+    const slateReel = pickSlateReel(
       gauntlet.games,
       lineup,
       challenge.cpuLineup,
@@ -261,68 +269,87 @@ export default function DailyScreen() {
             </aside>
 
             <section className="gauntlet-list results-layout__main">
+              {slateReel ? (
+                <div className="hl-featured">
+                  <div className="panel-head">
+                    <p className="section-label">Tonight’s highlight</p>
+                    <p className="panel-head__hint">Optional — open when you want the clip.</p>
+                  </div>
+                  <HighlightReel reel={slateReel} featured />
+                </div>
+              ) : null}
+
               <div className="panel-head">
                 <p className="section-label">Game log</p>
-                <p className="panel-head__hint">Open a game for stadium mods.</p>
+                <p className="panel-head__hint">Open a game for mods & play-by-play.</p>
               </div>
               <div className="gauntlet-accordion">
-                {gauntlet.games.map((g, i) => (
-                  <details key={g.stadium.id} className="game-summary">
-                    <summary>
-                      <span
-                        className={`gauntlet-outcome gauntlet-outcome--${g.outcome.toLowerCase()}`}
-                      >
-                        {g.outcome}
-                      </span>
-                      <span className="game-summary__title">
-                        <strong>
-                          G{i + 1} · {g.stadium.name}
-                        </strong>
-                        <span className="game-summary__score">
-                          {g.result.homeScore}–{g.result.awayScore}
-                          <span className="gauntlet-margin">
-                            {g.margin >= 0 ? ` +${g.margin}` : ` ${g.margin}`}
+                {gauntlet.games.map((g, i) => {
+                  const reel = resolveGameReel(
+                    g,
+                    i,
+                    lineup,
+                    challenge.cpuLineup,
+                  )
+                  return (
+                    <details key={g.stadium.id} className="game-summary">
+                      <summary>
+                        <span
+                          className={`gauntlet-outcome gauntlet-outcome--${g.outcome.toLowerCase()}`}
+                        >
+                          {g.outcome}
+                        </span>
+                        <span className="game-summary__title">
+                          <strong>
+                            G{i + 1} · {g.stadium.name}
+                          </strong>
+                          <span className="game-summary__score">
+                            {g.result.homeScore}–{g.result.awayScore}
+                            <span className="gauntlet-margin">
+                              {g.margin >= 0 ? ` +${g.margin}` : ` ${g.margin}`}
+                            </span>
                           </span>
                         </span>
-                      </span>
-                    </summary>
-                    <div className="game-summary__body">
-                      {g.mvp ? (
-                        <p className="game-summary__mvp">
-                          <span className="game-summary__mvp-label">MVP</span>
-                          <span
-                            className={`play-team play-team--${g.mvp.side === 'home' ? 'you' : 'cpu'}`}
-                          >
-                            {g.mvp.side === 'home' ? 'You' : 'CPU'}
-                          </span>
-                          <span>
-                            {g.mvp.name} · {g.mvp.blurb}
-                          </span>
+                      </summary>
+                      <div className="game-summary__body">
+                        {reel ? <HighlightReel reel={reel} compact /> : null}
+                        {g.mvp ? (
+                          <p className="game-summary__mvp">
+                            <span className="game-summary__mvp-label">MVP</span>
+                            <span
+                              className={`play-team play-team--${g.mvp.side === 'home' ? 'you' : 'cpu'}`}
+                            >
+                              {g.mvp.side === 'home' ? 'You' : 'CPU'}
+                            </span>
+                            <span>
+                              {g.mvp.name} · {g.mvp.blurb}
+                            </span>
+                          </p>
+                        ) : null}
+                        <p className="game-summary__mods">
+                          {stadiumSummary(g.stadium)}
+                          {stadiumHurtHint(g.stadium.type)}
                         </p>
-                      ) : null}
-                      <p className="game-summary__mods">
-                        {stadiumSummary(g.stadium)}
-                        {stadiumHurtHint(g.stadium.type)}
-                      </p>
-                      <p className="game-summary__grades">
-                        You Off {g.result.homeRatings.offense} / Def{' '}
-                        {g.result.homeRatings.defense} · CPU Off{' '}
-                        {g.result.awayRatings.offense} / Def{' '}
-                        {g.result.awayRatings.defense}
-                      </p>
-                      <ul className="game-summary__plays">
-                        {(g.highlights?.length
-                          ? g.highlights
-                          : ['No play-by-play saved — re-run for highlights.']
-                        ).map((line) => (
-                          <li key={line}>
-                            <HighlightLine text={line} />
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </details>
-                ))}
+                        <p className="game-summary__grades">
+                          You Off {g.result.homeRatings.offense} / Def{' '}
+                          {g.result.homeRatings.defense} · CPU Off{' '}
+                          {g.result.awayRatings.offense} / Def{' '}
+                          {g.result.awayRatings.defense}
+                        </p>
+                        <ul className="game-summary__plays">
+                          {(g.highlights?.length
+                            ? g.highlights
+                            : ['No play-by-play saved — re-run for highlights.']
+                          ).map((line) => (
+                            <li key={line}>
+                              <HighlightLine text={line} />
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </details>
+                  )
+                })}
               </div>
             </section>
           </div>

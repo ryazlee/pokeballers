@@ -1,4 +1,9 @@
 import { autoDraftFromPool } from './draft'
+import {
+  buildHighlightReel,
+  reelFromHighlightLines,
+  type HighlightReel,
+} from './highlightReel'
 import { getPokemon, POKEMON } from './pokemon'
 import { hashString, mulberry32 } from './rng'
 import { simulateGame, lineupSeed } from './sim'
@@ -165,6 +170,8 @@ export type GauntletGame = {
   /** Compact play-by-play for the results dropdown. */
   highlights: string[]
   mvp: GameMvp | null
+  /** Signature play for the 2D highlight reel. */
+  reel: HighlightReel | null
 }
 
 function sampleEvenly<T>(items: T[], count: number): T[] {
@@ -466,11 +473,63 @@ export function runGauntlet(
       outcome,
       highlights: pickHighlights(result),
       mvp: pickMvp(result),
+      reel: buildHighlightReel(
+        result,
+        stadium.name,
+        i,
+        homeLineup,
+        challenge.cpuLineup,
+      ),
     })
   }
 
   const tallied = scoreGauntlet(games)
   return { dateKey, games, ...tallied, slateMvp: pickSlateMvp(games) }
+}
+
+/** Resolve a reel for display — stored or rebuilt from highlight lines. */
+export function resolveGameReel(
+  game: GauntletGame,
+  gameIndex: number,
+  homeLineup: Lineup,
+  cpuLineup: Lineup,
+): HighlightReel | null {
+  if (game.reel) return { ...game.reel, gameIndex }
+  return reelFromHighlightLines(
+    game.highlights ?? [],
+    game.stadium.name,
+    gameIndex,
+    game.result.homeScore,
+    game.result.awayScore,
+    game.result.boxScore ?? [],
+    homeLineup,
+    cpuLineup,
+  )
+}
+
+/** Best drama reel across the slate for the featured player. */
+export function pickSlateReel(
+  games: GauntletGame[],
+  homeLineup: Lineup,
+  cpuLineup: Lineup,
+): HighlightReel | null {
+  let best: HighlightReel | null = null
+  let bestScore = -1
+  games.forEach((g, i) => {
+    const reel = resolveGameReel(g, i, homeLineup, cpuLineup)
+    if (!reel) return
+    let score = reel.points * 10
+    if (reel.kind === 'block') score += 22
+    if (reel.kind === 'ot') score += 30
+    if (reel.quarter >= 4) score += 8
+    if (g.outcome === 'W') score += 6
+    if (Math.abs(g.margin) <= 5) score += 10
+    if (score > bestScore) {
+      bestScore = score
+      best = reel
+    }
+  })
+  return best
 }
 
 const SHARE_URL = 'https://ryazlee.github.io/pokeballers/'
