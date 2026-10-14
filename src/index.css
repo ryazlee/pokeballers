@@ -1086,6 +1086,20 @@ a {
   width: 2.25rem;
 }
 
+.slate-box__pct {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-secondary);
+}
+
+.slate-box__pct--win {
+  color: var(--success);
+}
+
+.slate-box__pct--loss {
+  color: var(--danger);
+}
+
 .slate-box__table th {
   font-size: 0.6875rem;
   font-weight: 650;
@@ -1267,8 +1281,8 @@ a {
 
 .half-court {
   position: relative;
-  /* ~50×47 half-court proportion */
-  aspect-ratio: 50 / 47;
+  /* Cropped offensive end (~50 × 31.5) */
+  aspect-ratio: 50 / 31.5;
   width: 100%;
   min-height: 0;
   border-radius: var(--radius-lg);
@@ -1453,31 +1467,31 @@ html.theme-dark .half-court__frame {
   color: var(--tag-muted);
 }
 
-/* Positions mapped onto top-down half court (baseline / rim at bottom). */
+/* Positions on cropped offensive end (baseline / rim at bottom). */
 .court-slot--pg {
   left: 50%;
-  top: 14%;
+  top: 6%;
   transform: translateX(-50%);
 }
 
 .court-slot--sg {
-  right: 6%;
-  top: 28%;
+  right: 5%;
+  top: 22%;
 }
 
 .court-slot--sf {
-  left: 6%;
-  top: 28%;
+  left: 5%;
+  top: 22%;
 }
 
 .court-slot--pf {
-  left: 10%;
-  bottom: 18%;
+  left: 12%;
+  bottom: 20%;
 }
 
 .court-slot--c {
-  right: 10%;
-  bottom: 14%;
+  right: 12%;
+  bottom: 16%;
 }
 
 .bench-row {

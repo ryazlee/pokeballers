@@ -284,6 +284,11 @@ export function pickMvp(result: SimResult): GameMvp | null {
 export type SlateBoxLine = PlayerBox & {
   games: number
   slot: RosterSlot | null
+  /**
+   * Share of slot production vs the CPU at the same spot (0–100).
+   * 50 = even; higher = you won the matchup.
+   */
+  matchupPct: number | null
 }
 
 function slotLabel(slot: RosterSlot | null): string {
@@ -305,16 +310,16 @@ function slotForPokemon(lineup: Lineup | undefined, pokemonId: number): RosterSl
   return null
 }
 
-/** Aggregate your (home) box scores across the slate. */
-export function aggregateHomeBox(
-  games: GauntletGame[],
-  lineup?: Lineup,
-): SlateBoxLine[] {
-  const totals = new Map<number, SlateBoxLine>()
+type AggBox = PlayerBox & { games: number }
 
+function aggregateSide(
+  games: GauntletGame[],
+  side: 'home' | 'away',
+): Map<number, AggBox> {
+  const totals = new Map<number, AggBox>()
   for (const g of games) {
     for (const b of g.result.boxScore ?? []) {
-      if (b.side !== 'home') continue
+      if (b.side !== side) continue
       const prev = totals.get(b.pokemonId)
       if (prev) {
         prev.points += b.points
@@ -323,16 +328,49 @@ export function aggregateHomeBox(
         prev.rebounds += b.rebounds
         prev.games += 1
       } else {
-        totals.set(b.pokemonId, {
-          ...b,
-          games: 1,
-          slot: slotForPokemon(lineup, b.pokemonId),
-        })
+        totals.set(b.pokemonId, { ...b, games: 1 })
       }
     }
   }
+  return totals
+}
 
-  const rows = [...totals.values()]
+function matchupPercent(you: number, cpu: number): number {
+  const sum = you + cpu
+  if (sum <= 0) return 50
+  return Math.round((100 * you) / sum)
+}
+
+/** Aggregate your (home) box scores across the slate. */
+export function aggregateHomeBox(
+  games: GauntletGame[],
+  lineup?: Lineup,
+  cpuLineup?: Lineup,
+): SlateBoxLine[] {
+  const home = aggregateSide(games, 'home')
+  const away = aggregateSide(games, 'away')
+
+  const cpuBySlot = new Map<RosterSlot, AggBox>()
+  if (cpuLineup) {
+    for (const slot of ALL_SLOTS) {
+      const id = cpuLineup[slot]?.pokemonId
+      if (id == null) continue
+      const row = away.get(id)
+      if (row) cpuBySlot.set(slot, row)
+    }
+  }
+
+  const rows: SlateBoxLine[] = []
+  for (const row of home.values()) {
+    const slot = slotForPokemon(lineup, row.pokemonId)
+    const cpu = slot ? cpuBySlot.get(slot) : undefined
+    const matchupPct =
+      cpu != null
+        ? matchupPercent(boxImpact(row), boxImpact(cpu))
+        : null
+    rows.push({ ...row, slot, matchupPct })
+  }
+
   if (lineup) {
     const order = new Map(ALL_SLOTS.map((s, i) => [s, i]))
     rows.sort(

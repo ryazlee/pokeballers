@@ -54,18 +54,24 @@ export type ShareImageOptions = {
   lineup?: Lineup
 }
 
+function slotShort(slot: RosterSlot): string {
+  if (slot === 'BENCH1') return 'B1'
+  if (slot === 'BENCH2') return 'B2'
+  return slot
+}
+
 /**
- * Cluster layout inspired by classic party screenshots:
- * big pieces in back, wings mid, smaller up front — drawn back→front.
+ * Tighter cluster — more overlap, positions labeled.
+ * Drawn back → front.
  */
 const STACK: { slot: RosterSlot; x: number; y: number; size: number }[] = [
-  { slot: 'C', x: 0, y: -70, size: 210 },
-  { slot: 'PF', x: -150, y: -40, size: 190 },
-  { slot: 'SF', x: 150, y: -40, size: 190 },
-  { slot: 'SG', x: -210, y: 40, size: 175 },
-  { slot: 'PG', x: 210, y: 40, size: 175 },
-  { slot: 'BENCH1', x: -80, y: 110, size: 155 },
-  { slot: 'BENCH2', x: 80, y: 110, size: 155 },
+  { slot: 'C', x: 0, y: -58, size: 230 },
+  { slot: 'PF', x: -105, y: -28, size: 205 },
+  { slot: 'SF', x: 105, y: -28, size: 205 },
+  { slot: 'SG', x: -155, y: 48, size: 185 },
+  { slot: 'PG', x: 155, y: 48, size: 185 },
+  { slot: 'BENCH1', x: -48, y: 108, size: 165 },
+  { slot: 'BENCH2', x: 48, y: 108, size: 165 },
 ]
 
 async function paintPartyCluster(
@@ -83,10 +89,9 @@ async function paintPartyCluster(
     }),
   )
 
-  // Soft ground shadow under the whole party
   ctx.fillStyle = 'rgba(40, 30, 20, 0.12)'
   ctx.beginPath()
-  ctx.ellipse(cx, cy + 150, 340, 42, 0, 0, Math.PI * 2)
+  ctx.ellipse(cx, cy + 155, 300, 40, 0, 0, Math.PI * 2)
   ctx.fill()
 
   for (const spot of loaded) {
@@ -99,8 +104,8 @@ async function paintPartyCluster(
     ctx.ellipse(
       cx + spot.x,
       cy + spot.y + spot.size * 0.42,
-      spot.size * 0.32,
-      12,
+      spot.size * 0.3,
+      11,
       0,
       0,
       Math.PI * 2,
@@ -112,7 +117,21 @@ async function paintPartyCluster(
       ctx.drawImage(spot.img, x, y, spot.size, spot.size)
       ctx.imageSmoothingEnabled = true
     }
+
+    // Position chip near the feet
+    const label = slotShort(spot.slot)
+    ctx.font = '800 15px "Barlow Condensed", Barlow, system-ui, sans-serif'
+    const tw = ctx.measureText(label).width
+    const lx = cx + spot.x - (tw + 14) / 2
+    const ly = cy + spot.y + spot.size * 0.48
+    roundRect(ctx, lx, ly - 12, tw + 14, 20, 6)
+    ctx.fillStyle = 'rgba(28, 25, 23, 0.78)'
+    ctx.fill()
+    ctx.fillStyle = '#fafafa'
+    ctx.textAlign = 'center'
+    ctx.fillText(label, cx + spot.x, ly + 2)
   }
+  ctx.textAlign = 'left'
 }
 
 function paintOutcomeStrip(

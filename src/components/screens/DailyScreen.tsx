@@ -100,7 +100,11 @@ export default function DailyScreen() {
       showTeam: shareShowTeam,
       lineup,
     })
-    const slateBox = aggregateHomeBox(gauntlet.games, lineup)
+    const slateBox = aggregateHomeBox(
+      gauntlet.games,
+      lineup,
+      challenge.cpuLineup,
+    )
     return (
       <div className="app-shell">
         <AppHeader
@@ -200,11 +204,23 @@ export default function DailyScreen() {
                           <th scope="col">REB</th>
                           <th scope="col">AST</th>
                           <th scope="col">BLK</th>
+                          <th scope="col" title="Share of production vs CPU at this spot">
+                            vs
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
                         {slateBox.map((row) => {
                           const p = getPokemon(row.pokemonId)
+                          const pct = row.matchupPct
+                          const pctClass =
+                            pct == null
+                              ? ''
+                              : pct >= 55
+                                ? ' slate-box__pct--win'
+                                : pct <= 45
+                                  ? ' slate-box__pct--loss'
+                                  : ''
                           return (
                             <tr key={row.pokemonId}>
                               <td className="slate-box__pos">
@@ -227,6 +243,9 @@ export default function DailyScreen() {
                               <td>{row.rebounds}</td>
                               <td>{row.assists}</td>
                               <td>{row.blocks}</td>
+                              <td className={`slate-box__pct${pctClass}`}>
+                                {pct != null ? `${pct}%` : '—'}
+                              </td>
                             </tr>
                           )
                         })}
