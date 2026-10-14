@@ -2,9 +2,57 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pokeballers</title>
+    <meta name="theme-color" content="#fafafa" />
+    <meta
+      name="description"
+      content="Draft a 5-on-5 Pokémon basketball team under a BST cap and tip off."
+    />
+    <meta property="og:site_name" content="Pokeballers" />
+    <meta property="og:title" content="Pokeballers: All-5 Pokémon Hoops" />
+    <meta
+      property="og:description"
+      content="Draft a 5-on-5 Pokémon basketball team under a BST cap and tip off."
+    />
+    <meta property="og:image" content="https://ryazlee.github.io/pokeballers/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="1200" />
+    <meta property="og:url" content="https://ryazlee.github.io/pokeballers/" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Pokeballers: All-5 Pokémon Hoops" />
+    <meta
+      name="twitter:description"
+      content="Draft a 5-on-5 Pokémon basketball team under a BST cap and tip off."
+    />
+    <meta name="twitter:image" content="https://ryazlee.github.io/pokeballers/og.png" />
+    <title>Pokeballers: All-5 Pokémon Hoops</title>
+    <script>
+      try {
+        var saved = localStorage.getItem('pokeballers-theme')
+        var dark =
+          saved === 'dark' ||
+          (saved !== 'light' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        if (dark) {
+          document.documentElement.classList.add('theme-dark')
+          document
+            .querySelector('meta[name="theme-color"]')
+            ?.setAttribute('content', '#09090b')
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      window.goatcounter = { no_onload: true }
+    </script>
+    <script
+      data-goatcounter="https://ryab.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
   </head>
   <body>
     <div id="root"></div>
