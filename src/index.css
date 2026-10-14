@@ -2040,6 +2040,200 @@ html.theme-dark .half-court__frame {
   margin-bottom: 1.15rem;
 }
 
+/* Full-game watch-only sim broadcast */
+.gb-sim {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.55rem 0 0.35rem;
+}
+
+.gb-sim--closed {
+  gap: 0;
+}
+
+.gb-sim__reveal {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, #3b82f6 12%, var(--surface)) 0%,
+      var(--surface) 48%,
+      var(--surface) 100%
+    );
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s var(--ease-out);
+}
+
+.gb-sim__reveal:hover {
+  border-color: color-mix(in srgb, #3b82f6 45%, var(--border));
+  box-shadow: 0 10px 28px color-mix(in srgb, #0f172a 10%, transparent);
+  transform: translateY(-1px);
+}
+
+.gb-sim__reveal-play {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  color: #fff;
+  background: #2563eb;
+  box-shadow: 0 6px 16px color-mix(in srgb, #2563eb 35%, transparent);
+}
+
+.gb-sim__reveal-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.gb-sim__reveal-title {
+  font-size: 0.9rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.gb-sim__reveal-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.gb-sim__chrome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+}
+
+.gb-sim__eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.gb-sim__badge {
+  display: inline-flex;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #eff6ff;
+  background: #2563eb;
+}
+
+.gb-sim__clock {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.gb-sim__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.gb-sim__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.gb-sim__btn:hover {
+  border-color: color-mix(in srgb, #3b82f6 40%, var(--border));
+}
+
+.gb-sim__btn--primary {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.gb-sim__btn--ghost {
+  background: transparent;
+}
+
+.gb-sim__stage-wrap {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #151c28;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #3b82f6 28%, transparent),
+    0 16px 40px color-mix(in srgb, #0f172a 22%, transparent);
+}
+
+.gb-sim__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+.gb-sim__loading {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(15, 23, 42, 0.6);
+  color: #fafafa;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.gb-sim__scrub {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.gb-sim__scrub input[type='range'] {
+  flex: 1;
+  accent-color: #2563eb;
+}
+
+.gb-sim__scrub-meta {
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5rem;
+  text-align: right;
+}
+
+
 .hl-reel {
   display: flex;
   flex-direction: column;

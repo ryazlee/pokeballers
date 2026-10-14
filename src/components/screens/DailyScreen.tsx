@@ -6,6 +6,7 @@ import CourtBoard from '../CourtBoard'
 import PokemonHoverCard from '../PokemonHoverCard'
 import PokemonPicker from '../PokemonPicker'
 import RatingBars from '../RatingBars'
+import GameBroadcast from '../GameBroadcast'
 import HighlightReel from '../HighlightReel'
 import ShareImageCard from '../ShareImageCard'
 import { useLineup } from '../../hooks/useLineup'
@@ -314,6 +315,14 @@ export default function DailyScreen() {
                         </span>
                       </summary>
                       <div className="game-summary__body">
+                        <GameBroadcast
+                          result={g.result}
+                          stadium={g.stadium}
+                          gameIndex={i}
+                          homeLineup={lineup}
+                          awayLineup={challenge.cpuLineup}
+                          compact
+                        />
                         {reel ? <HighlightReel reel={reel} compact /> : null}
                         {g.mvp ? (
                           <p className="game-summary__mvp">
