@@ -1290,34 +1290,35 @@ a {
 .half-court__wood {
   position: absolute;
   inset: 0;
+  /* Soft lengthwise planks — low contrast so lines read first */
   background:
     radial-gradient(
-      ellipse 70% 50% at 50% 88%,
-      color-mix(in srgb, #2a1c10 16%, transparent),
-      transparent 65%
+      ellipse 75% 45% at 50% 90%,
+      color-mix(in srgb, #2a1c10 12%, transparent),
+      transparent 70%
     ),
     repeating-linear-gradient(
       90deg,
-      #c9a06a 0 12px,
-      #b8894f 12px 24px,
-      #d0a875 24px 36px,
-      #b07d45 36px 48px
+      #c4a06c 0 18px,
+      #b8925f 18px 19px,
+      #c9a572 19px 37px,
+      #b8925f 37px 38px
     );
 }
 
 html.theme-dark .half-court__wood {
   background:
     radial-gradient(
-      ellipse 70% 50% at 50% 88%,
-      color-mix(in srgb, #000 32%, transparent),
-      transparent 65%
+      ellipse 75% 45% at 50% 90%,
+      color-mix(in srgb, #000 28%, transparent),
+      transparent 70%
     ),
     repeating-linear-gradient(
       90deg,
-      #5a4330 0 12px,
-      #473524 12px 24px,
-      #624a35 24px 36px,
-      #3f2f21 36px 48px
+      #4f3c2c 0 18px,
+      #433325 18px 19px,
+      #554130 19px 37px,
+      #433325 37px 38px
     );
 }
 
@@ -1371,16 +1372,11 @@ html.theme-dark .half-court__frame {
   gap: 0.2rem;
   color: var(--text);
   text-align: center;
-  transition: transform 160ms var(--ease-out);
 }
 
-.court-slot:hover {
-  transform: translateY(-1px);
-}
-
-.court-slot--pg:hover,
-.court-slot--sf:hover {
-  transform: translateX(-50%) translateY(-1px);
+.court-slot:hover .court-slot__sprite,
+.court-slot:hover .court-slot__empty-mark {
+  filter: brightness(1.06);
 }
 
 .court-slot--selected .court-slot__sprite,
