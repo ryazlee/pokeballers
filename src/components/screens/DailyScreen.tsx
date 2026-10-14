@@ -6,8 +6,10 @@ import CourtBoard from '../CourtBoard'
 import PokemonHoverCard from '../PokemonHoverCard'
 import PokemonPicker from '../PokemonPicker'
 import RatingBars from '../RatingBars'
+import ShareImageCard from '../ShareImageCard'
 import { useLineup } from '../../hooks/useLineup'
 import {
+  aggregateHomeBox,
   buildDailyChallenge,
   formatGauntletShare,
   runGauntlet,
@@ -97,6 +99,7 @@ export default function DailyScreen() {
       showTeam: shareShowTeam,
       lineup,
     })
+    const slateBox = aggregateHomeBox(gauntlet.games)
     return (
       <div className="app-shell">
         <AppHeader
@@ -149,6 +152,51 @@ export default function DailyScreen() {
                 ) : null}
               </section>
 
+              {slateBox.length > 0 ? (
+                <section className="slate-box">
+                  <p className="section-label">Your slate stats</p>
+                  <div className="slate-box__table-wrap">
+                    <table className="slate-box__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Player</th>
+                          <th scope="col">PTS</th>
+                          <th scope="col">REB</th>
+                          <th scope="col">AST</th>
+                          <th scope="col">BLK</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {slateBox.map((row) => {
+                          const p = getPokemon(row.pokemonId)
+                          return (
+                            <tr key={row.pokemonId}>
+                              <td>
+                                <span className="slate-box__player">
+                                  {p ? (
+                                    <img
+                                      src={p.sprite}
+                                      alt=""
+                                      width={28}
+                                      height={28}
+                                    />
+                                  ) : null}
+                                  {row.name}
+                                </span>
+                              </td>
+                              <td>{row.points}</td>
+                              <td>{row.rebounds}</td>
+                              <td>{row.assists}</td>
+                              <td>{row.blocks}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ) : null}
+
               <section className="share-card">
                 <div className="share-card__bar">
                   <button
@@ -175,10 +223,15 @@ export default function DailyScreen() {
                       ) : (
                         <Copy size={15} strokeWidth={2} aria-hidden="true" />
                       )}
-                      {copied ? 'Copied' : 'Copy / share'}
+                      {copied ? 'Copied' : 'Copy text'}
                     </button>
                   </div>
                 </div>
+                <ShareImageCard
+                  result={gauntlet}
+                  lineup={lineup}
+                  showTeam={shareShowTeam}
+                />
                 <pre className="share-card__text">{share}</pre>
               </section>
             </aside>

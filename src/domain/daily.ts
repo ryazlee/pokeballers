@@ -280,12 +280,11 @@ export function pickMvp(result: SimResult): GameMvp | null {
   }
 }
 
-/** Best home player across the 7-game slate (totals). */
-export function pickSlateMvp(games: GauntletGame[]): GameMvp | null {
-  const totals = new Map<
-    number,
-    PlayerBox & { games: number }
-  >()
+export type SlateBoxLine = PlayerBox & { games: number }
+
+/** Aggregate your (home) box scores across the slate. */
+export function aggregateHomeBox(games: GauntletGame[]): SlateBoxLine[] {
+  const totals = new Map<number, SlateBoxLine>()
 
   for (const g of games) {
     for (const b of g.result.boxScore ?? []) {
@@ -303,18 +302,14 @@ export function pickSlateMvp(games: GauntletGame[]): GameMvp | null {
     }
   }
 
-  if (totals.size === 0) return null
+  return [...totals.values()].sort((a, b) => boxImpact(b) - boxImpact(a))
+}
 
-  let best: (PlayerBox & { games: number }) | null = null
-  let bestVal = -1
-  for (const row of totals.values()) {
-    const val = boxImpact(row)
-    if (val > bestVal) {
-      bestVal = val
-      best = row
-    }
-  }
-  if (!best || bestVal <= 0) return null
+/** Best home player across the 7-game slate (totals). */
+export function pickSlateMvp(games: GauntletGame[]): GameMvp | null {
+  const rows = aggregateHomeBox(games)
+  const best = rows[0]
+  if (!best || boxImpact(best) <= 0) return null
 
   return {
     name: best.name,

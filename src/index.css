@@ -279,6 +279,7 @@ a {
 .scoreboard,
 .gauntlet-list,
 .share-card,
+.slate-box,
 .scout-block {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -677,12 +678,18 @@ a {
 .results-layout {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.15rem;
 }
 
 .results-layout__aside,
 .results-layout__main {
   min-width: 0;
+}
+
+.results-layout__aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .panel-head {
@@ -810,33 +817,6 @@ a {
   flex-direction: column;
 }
 
-.share-card__mvp {
-  margin: 0;
-  padding: 0.55rem 0.9rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.25rem 0.4rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text);
-  background: color-mix(in srgb, var(--hoop) 6%, var(--surface));
-}
-
-.share-card__mvp-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--hoop);
-}
-
-.share-card__mvp-blurb {
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
 .share-card__bar {
   display: flex;
   align-items: center;
@@ -942,13 +922,124 @@ a {
 .share-card__text {
   margin: 0;
   padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--border);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
   line-height: 1.45;
   white-space: pre-wrap;
   color: var(--text-secondary);
-  max-height: 16rem;
+  max-height: 12rem;
   overflow: auto;
+}
+
+.share-image {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem 0.85rem;
+}
+
+.share-image__frame {
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  border: 1px solid var(--border);
+}
+
+.share-image__canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
+
+.share-image__save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.share-image__save:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--text) 28%, var(--border));
+}
+
+.share-image__save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.slate-box {
+  padding: 0.95rem 1rem 1.05rem;
+}
+
+.slate-box .section-label {
+  margin: 0 0 0.65rem;
+}
+
+.slate-box__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.slate-box__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.slate-box__table th,
+.slate-box__table td {
+  padding: 0.45rem 0.35rem;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+}
+
+.slate-box__table th:first-child,
+.slate-box__table td:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+
+.slate-box__table th:last-child,
+.slate-box__table td:last-child {
+  padding-right: 0;
+}
+
+.slate-box__table th {
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.slate-box__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.slate-box__player {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.slate-box__player img {
+  flex-shrink: 0;
+  image-rendering: pixelated;
 }
 
 @media (min-width: 960px) {
@@ -1035,9 +1126,7 @@ a {
   .results-layout__aside {
     position: sticky;
     top: calc(56px + var(--safe-top) + 0.75rem);
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
+    gap: 1rem;
   }
 
   .half-court {
@@ -2202,15 +2291,28 @@ html.theme-dark .play-team--cpu {
   }
 
   .results-layout {
-    gap: 0.85rem;
+    gap: 1.1rem;
   }
 
-  .scoreboard {
+  .results-layout__aside {
+    gap: 1rem;
+  }
+
+  .scoreboard,
+  .slate-box {
     padding: 0.95rem 1rem;
   }
 
   .scoreboard__big {
     font-size: 3.2rem;
+  }
+
+  .share-image {
+    padding: 0.65rem 0.75rem 0.75rem;
+  }
+
+  .builder-sidebar {
+    gap: 0.85rem;
   }
 
   .game-summary__title {
