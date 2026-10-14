@@ -69,8 +69,8 @@ export default function ShareImageCard({ result, lineup }: Props) {
         <canvas
           ref={canvasRef}
           className="share-image__canvas"
-          width={1080}
-          height={1080}
+          width={1200}
+          height={675}
           aria-label="Shareable results image"
         />
       </div>
