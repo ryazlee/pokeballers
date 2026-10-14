@@ -160,10 +160,10 @@ export default function DailyScreen() {
                     className={`share-card__team${shareShowTeam ? ' share-card__team--on' : ''}`}
                     role="switch"
                     aria-checked={shareShowTeam}
-                    aria-label="Include team in share"
+                    aria-label="Include team in text copy"
                     onClick={() => setShareShowTeam((v) => !v)}
                   >
-                    <span className="share-card__team-label">Show team</span>
+                    <span className="share-card__team-label">Team in text</span>
                     <span className="share-card__switch" aria-hidden="true">
                       <span className="share-card__switch-thumb" />
                     </span>
@@ -184,11 +184,7 @@ export default function DailyScreen() {
                   </div>
                 </div>
                 <pre className="share-card__text">{share}</pre>
-                <ShareImageCard
-                  result={gauntlet}
-                  lineup={lineup}
-                  showTeam={shareShowTeam}
-                />
+                <ShareImageCard result={gauntlet} lineup={lineup} />
               </section>
 
               {slateBox.length > 0 ? (

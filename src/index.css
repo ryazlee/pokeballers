@@ -631,8 +631,31 @@ a {
   min-width: 0;
 }
 
-.builder-field {
-  order: -1;
+/* Mobile: lift sidebar children so we can put CPU above the court. */
+@media (max-width: 959px) {
+  .builder-sidebar {
+    display: contents;
+  }
+
+  .cpu-lineup {
+    order: -2;
+  }
+
+  .builder-field {
+    order: -1;
+  }
+
+  .daily-brief {
+    order: 0;
+  }
+
+  .rating-panel {
+    order: 1;
+  }
+
+  .stadium-fold {
+    order: 2;
+  }
 }
 
 .daily-brief {
@@ -1096,17 +1119,24 @@ a {
     align-items: start;
   }
 
-  .builder-field {
-    order: 0;
-  }
-
   .builder-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
     position: sticky;
     top: calc(56px + var(--safe-top) + 0.75rem);
     max-height: calc(100svh - 56px - var(--safe-top) - 1.5rem);
     overflow: auto;
     padding-bottom: 0.5rem;
     scrollbar-width: thin;
+  }
+
+  .builder-field,
+  .cpu-lineup,
+  .daily-brief,
+  .rating-panel,
+  .stadium-fold {
+    order: unset;
   }
 
   .builder-footer.builder-footer--desktop {
@@ -1426,40 +1456,44 @@ html.theme-dark .half-court__frame {
   border-radius: 999px 0 0 0;
 }
 
+/* Basket on the baseline (bottom middle) — net hangs into the paint. */
 .half-court__backboard {
   position: absolute;
   left: 50%;
-  bottom: calc(4% + 38% + 10px);
+  bottom: calc(4% - 1px);
   transform: translateX(-50%);
-  width: 42px;
+  width: 48px;
   height: 4px;
   border-radius: 2px;
   background: color-mix(in srgb, #f8fafc 85%, #94a3b8);
+  z-index: 1;
 }
 
 .half-court__hoop {
   position: absolute;
   left: 50%;
-  bottom: calc(4% + 38% - 2px);
+  bottom: calc(4% + 5px);
   transform: translateX(-50%);
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border: 3px solid var(--hoop);
   border-radius: 999px;
   background: transparent;
+  z-index: 2;
 }
 
 .half-court__net {
   position: absolute;
   left: 50%;
-  bottom: calc(4% + 38% - 14px);
+  bottom: calc(4% + 24px);
   transform: translateX(-50%);
-  width: 14px;
-  height: 12px;
+  width: 16px;
+  height: 14px;
   border: 1.5px solid color-mix(in srgb, #fff 55%, transparent);
   border-top: none;
   border-radius: 0 0 8px 8px;
-  opacity: 0.7;
+  opacity: 0.75;
+  z-index: 1;
 }
 
 .court-slot {

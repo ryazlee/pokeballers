@@ -11,10 +11,9 @@ import type { Lineup } from '../domain/types'
 type Props = {
   result: GauntletResult
   lineup: Lineup
-  showTeam: boolean
 }
 
-export default function ShareImageCard({ result, lineup, showTeam }: Props) {
+export default function ShareImageCard({ result, lineup }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -26,20 +25,20 @@ export default function ShareImageCard({ result, lineup, showTeam }: Props) {
     if (!canvas) return
     let cancelled = false
     setReady(false)
-    void paintShareImage(canvas, result, { showTeam, lineup }).then(() => {
+    void paintShareImage(canvas, result, { showTeam: true, lineup }).then(() => {
       if (!cancelled) setReady(true)
     })
     return () => {
       cancelled = true
     }
-  }, [open, result, lineup, showTeam])
+  }, [open, result, lineup])
 
   async function saveImage() {
     const canvas = canvasRef.current
     if (!canvas) return
     setBusy(true)
     try {
-      await paintShareImage(canvas, result, { showTeam, lineup })
+      await paintShareImage(canvas, result, { showTeam: true, lineup })
       const blob = await canvasToPngBlob(canvas)
       await shareOrDownloadPng(blob, `pokeballers-${result.dateKey}.png`)
     } catch {
