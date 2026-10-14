@@ -60,76 +60,75 @@ function slotShort(slot: RosterSlot): string {
   return slot
 }
 
-/**
- * Tighter cluster — more overlap, positions labeled.
- * Drawn back → front.
- */
-const STACK: { slot: RosterSlot; x: number; y: number; size: number }[] = [
-  { slot: 'C', x: 0, y: -58, size: 230 },
-  { slot: 'PF', x: -105, y: -28, size: 205 },
-  { slot: 'SF', x: 105, y: -28, size: 205 },
-  { slot: 'SG', x: -155, y: 48, size: 185 },
-  { slot: 'PG', x: 155, y: 48, size: 185 },
-  { slot: 'BENCH1', x: -48, y: 108, size: 165 },
-  { slot: 'BENCH2', x: 48, y: 108, size: 165 },
+/** Roster order left → right for the share lineup. */
+const LINE_SLOTS: RosterSlot[] = [
+  'PG',
+  'SG',
+  'SF',
+  'PF',
+  'C',
+  'BENCH1',
+  'BENCH2',
 ]
 
-async function paintPartyCluster(
+/** Single horizontal stack with light overlap + position chips. */
+async function paintPartyLine(
   ctx: CanvasRenderingContext2D,
   lineup: Lineup,
-  cx: number,
   cy: number,
 ) {
-  const loaded = await Promise.all(
-    STACK.map(async (spot) => {
-      const entry = lineup[spot.slot]
+  const members = await Promise.all(
+    LINE_SLOTS.map(async (slot) => {
+      const entry = lineup[slot]
       const p = entry ? getPokemon(entry.pokemonId) : null
       const img = p ? await loadImage(p.sprite) : null
-      return { ...spot, p, img }
+      return { slot, p, img }
     }),
   )
 
-  ctx.fillStyle = 'rgba(40, 30, 20, 0.12)'
+  const filled = members.filter((m) => m.img || m.p)
+  if (filled.length === 0) return
+
+  const size = filled.length >= 7 ? 168 : 180
+  const overlap = size * 0.28
+  const step = size - overlap
+  const totalW = size + step * (filled.length - 1)
+  const startX = (W - totalW) / 2
+  // Tiny bob so it isn’t perfectly flat
+  const bob = [6, -4, 8, 0, 7, -3, 5]
+
+  ctx.fillStyle = 'rgba(40, 30, 20, 0.1)'
   ctx.beginPath()
-  ctx.ellipse(cx, cy + 155, 300, 40, 0, 0, Math.PI * 2)
+  ctx.ellipse(W / 2, cy + size * 0.78, totalW * 0.42, 28, 0, 0, Math.PI * 2)
   ctx.fill()
 
-  for (const spot of loaded) {
-    if (!spot.img && !spot.p) continue
-    const x = cx + spot.x - spot.size / 2
-    const y = cy + spot.y - spot.size / 2
+  for (let i = 0; i < filled.length; i++) {
+    const { slot, img } = filled[i]!
+    const x = startX + i * step
+    const y = cy + (bob[i % bob.length] ?? 0)
 
-    ctx.fillStyle = 'rgba(40, 30, 20, 0.14)'
+    ctx.fillStyle = 'rgba(40, 30, 20, 0.12)'
     ctx.beginPath()
-    ctx.ellipse(
-      cx + spot.x,
-      cy + spot.y + spot.size * 0.42,
-      spot.size * 0.3,
-      11,
-      0,
-      0,
-      Math.PI * 2,
-    )
+    ctx.ellipse(x + size / 2, y + size * 0.88, size * 0.28, 10, 0, 0, Math.PI * 2)
     ctx.fill()
 
-    if (spot.img) {
+    if (img) {
       ctx.imageSmoothingEnabled = false
-      ctx.drawImage(spot.img, x, y, spot.size, spot.size)
+      ctx.drawImage(img, x, y, size, size)
       ctx.imageSmoothingEnabled = true
     }
 
-    // Position chip near the feet
-    const label = slotShort(spot.slot)
-    ctx.font = '800 15px "Barlow Condensed", Barlow, system-ui, sans-serif'
+    const label = slotShort(slot)
+    ctx.font = '800 16px "Barlow Condensed", Barlow, system-ui, sans-serif'
     const tw = ctx.measureText(label).width
-    const lx = cx + spot.x - (tw + 14) / 2
-    const ly = cy + spot.y + spot.size * 0.48
-    roundRect(ctx, lx, ly - 12, tw + 14, 20, 6)
+    const lx = x + size / 2 - (tw + 16) / 2
+    const ly = y + size + 8
+    roundRect(ctx, lx, ly - 12, tw + 16, 22, 7)
     ctx.fillStyle = 'rgba(28, 25, 23, 0.78)'
     ctx.fill()
     ctx.fillStyle = '#fafafa'
     ctx.textAlign = 'center'
-    ctx.fillText(label, cx + spot.x, ly + 2)
+    ctx.fillText(label, x + size / 2, ly + 3)
   }
   ctx.textAlign = 'left'
 }
@@ -243,9 +242,9 @@ export async function paintShareImage(
     )
   }
 
-  // Party cluster — the visual hero
+  // Party line — the visual hero
   if (showTeam && lineup) {
-    await paintPartyCluster(ctx, lineup, W / 2, H * 0.52)
+    await paintPartyLine(ctx, lineup, H * 0.38)
   } else {
     // Text fallback if no lineup
     let y = 220
