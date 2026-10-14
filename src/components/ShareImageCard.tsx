@@ -11,9 +11,10 @@ import type { Lineup } from '../domain/types'
 type Props = {
   result: GauntletResult
   lineup: Lineup
+  cpuLineup: Lineup
 }
 
-export default function ShareImageCard({ result, lineup }: Props) {
+export default function ShareImageCard({ result, lineup, cpuLineup }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -25,20 +26,20 @@ export default function ShareImageCard({ result, lineup }: Props) {
     if (!canvas) return
     let cancelled = false
     setReady(false)
-    void paintShareImage(canvas, result, { showTeam: true, lineup }).then(() => {
+    void paintShareImage(canvas, result, { lineup, cpuLineup }).then(() => {
       if (!cancelled) setReady(true)
     })
     return () => {
       cancelled = true
     }
-  }, [open, result, lineup])
+  }, [open, result, lineup, cpuLineup])
 
   async function saveImage() {
     const canvas = canvasRef.current
     if (!canvas) return
     setBusy(true)
     try {
-      await paintShareImage(canvas, result, { showTeam: true, lineup })
+      await paintShareImage(canvas, result, { lineup, cpuLineup })
       const blob = await canvasToPngBlob(canvas)
       await shareOrDownloadPng(blob, `pokeballers-${result.dateKey}.png`)
     } catch {
@@ -70,7 +71,7 @@ export default function ShareImageCard({ result, lineup }: Props) {
           ref={canvasRef}
           className="share-image__canvas"
           width={1200}
-          height={800}
+          height={900}
           aria-label="Shareable results image"
         />
       </div>

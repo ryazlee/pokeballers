@@ -188,7 +188,11 @@ export default function DailyScreen() {
                   </div>
                 </div>
                 <pre className="share-card__text">{share}</pre>
-                <ShareImageCard result={gauntlet} lineup={lineup} />
+                <ShareImageCard
+                  result={gauntlet}
+                  lineup={lineup}
+                  cpuLineup={challenge.cpuLineup}
+                />
               </section>
 
               {slateBox.length > 0 ? (

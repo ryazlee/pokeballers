@@ -2,9 +2,9 @@ import type { GauntletResult } from './daily'
 import { getPokemon } from './pokemon'
 import type { Lineup, RosterSlot } from './types'
 
-/** Landscape “team photo” card — closer to classic party art than a phone story. */
+/** Landscape performance summary — you vs CPU. */
 const W = 1200
-const H = 800
+const H = 900
 
 function logoUrl(): string {
   return `${import.meta.env.BASE_URL}og.png`
@@ -50,8 +50,8 @@ function shareHeadline(result: GauntletResult): string {
 }
 
 export type ShareImageOptions = {
-  showTeam?: boolean
   lineup?: Lineup
+  cpuLineup?: Lineup
 }
 
 function slotShort(slot: RosterSlot): string {
@@ -60,7 +60,6 @@ function slotShort(slot: RosterSlot): string {
   return slot
 }
 
-/** Roster order left → right for the share lineup. */
 const LINE_SLOTS: RosterSlot[] = [
   'PG',
   'SG',
@@ -71,12 +70,21 @@ const LINE_SLOTS: RosterSlot[] = [
   'BENCH2',
 ]
 
-/** Single horizontal stack with light overlap + position chips. */
+type LineOpts = {
+  cy: number
+  size: number
+  /** Desaturate / dim for CPU side */
+  muted?: boolean
+  chipFill: string
+  chipText: string
+}
+
 async function paintPartyLine(
   ctx: CanvasRenderingContext2D,
   lineup: Lineup,
-  cy: number,
+  opts: LineOpts,
 ) {
+  const { cy, size, muted = false, chipFill, chipText } = opts
   const members = await Promise.all(
     LINE_SLOTS.map(async (slot) => {
       const entry = lineup[slot]
@@ -89,17 +97,15 @@ async function paintPartyLine(
   const filled = members.filter((m) => m.img || m.p)
   if (filled.length === 0) return
 
-  const size = filled.length >= 7 ? 168 : 180
-  const overlap = size * 0.28
+  const overlap = size * 0.26
   const step = size - overlap
   const totalW = size + step * (filled.length - 1)
   const startX = (W - totalW) / 2
-  // Tiny bob so it isn’t perfectly flat
-  const bob = [6, -4, 8, 0, 7, -3, 5]
+  const bob = [4, -3, 5, 0, 4, -2, 3]
 
-  ctx.fillStyle = 'rgba(40, 30, 20, 0.1)'
+  ctx.fillStyle = muted ? 'rgba(40, 30, 20, 0.06)' : 'rgba(40, 30, 20, 0.1)'
   ctx.beginPath()
-  ctx.ellipse(W / 2, cy + size * 0.78, totalW * 0.42, 28, 0, 0, Math.PI * 2)
+  ctx.ellipse(W / 2, cy + size * 0.78, totalW * 0.42, 22, 0, 0, Math.PI * 2)
   ctx.fill()
 
   for (let i = 0; i < filled.length; i++) {
@@ -107,29 +113,49 @@ async function paintPartyLine(
     const x = startX + i * step
     const y = cy + (bob[i % bob.length] ?? 0)
 
-    ctx.fillStyle = 'rgba(40, 30, 20, 0.12)'
-    ctx.beginPath()
-    ctx.ellipse(x + size / 2, y + size * 0.88, size * 0.28, 10, 0, 0, Math.PI * 2)
-    ctx.fill()
-
     if (img) {
+      ctx.save()
+      if (muted) {
+        ctx.filter = 'grayscale(0.35) brightness(0.92) contrast(0.95)'
+        ctx.globalAlpha = 0.9
+      }
       ctx.imageSmoothingEnabled = false
       ctx.drawImage(img, x, y, size, size)
-      ctx.imageSmoothingEnabled = true
+      ctx.restore()
     }
 
     const label = slotShort(slot)
-    ctx.font = '800 16px "Barlow Condensed", Barlow, system-ui, sans-serif'
+    ctx.font = '800 14px "Barlow Condensed", Barlow, system-ui, sans-serif'
     const tw = ctx.measureText(label).width
-    const lx = x + size / 2 - (tw + 16) / 2
-    const ly = y + size + 8
-    roundRect(ctx, lx, ly - 12, tw + 16, 22, 7)
-    ctx.fillStyle = 'rgba(28, 25, 23, 0.78)'
+    const lx = x + size / 2 - (tw + 14) / 2
+    const ly = y + size + 6
+    roundRect(ctx, lx, ly - 11, tw + 14, 20, 6)
+    ctx.fillStyle = chipFill
     ctx.fill()
-    ctx.fillStyle = '#fafafa'
+    ctx.fillStyle = chipText
     ctx.textAlign = 'center'
     ctx.fillText(label, x + size / 2, ly + 3)
   }
+  ctx.textAlign = 'left'
+}
+
+function paintSideLabel(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  y: number,
+  kind: 'you' | 'cpu',
+) {
+  const isCpu = kind === 'cpu'
+  ctx.font = '800 22px "Barlow Condensed", Barlow, system-ui, sans-serif'
+  const tw = ctx.measureText(text).width
+  const w = tw + 28
+  const x = (W - w) / 2
+  roundRect(ctx, x, y - 18, w, 28, 8)
+  ctx.fillStyle = isCpu ? '#44403c' : '#ea580c'
+  ctx.fill()
+  ctx.fillStyle = '#fafafa'
+  ctx.textAlign = 'center'
+  ctx.fillText(text, W / 2, y + 2)
   ctx.textAlign = 'left'
 }
 
@@ -157,13 +183,13 @@ function paintOutcomeStrip(
   ctx.textAlign = 'left'
 }
 
-/** Paint a landscape share card onto the canvas. */
+/** Paint a landscape you-vs-CPU performance card. */
 export async function paintShareImage(
   canvas: HTMLCanvasElement,
   result: GauntletResult,
   options: ShareImageOptions = {},
 ): Promise<void> {
-  const { showTeam = true, lineup } = options
+  const { lineup, cpuLineup } = options
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')
@@ -172,7 +198,6 @@ export async function paintShareImage(
   await document.fonts.ready.catch(() => undefined)
   const logo = await loadImage(logoUrl())
 
-  // Soft paper / team-photo backdrop (like classic party art)
   const bg = ctx.createLinearGradient(0, 0, 0, H)
   bg.addColorStop(0, '#f3efe6')
   bg.addColorStop(0.55, '#ebe4d6')
@@ -180,90 +205,105 @@ export async function paintShareImage(
   ctx.fillStyle = bg
   ctx.fillRect(0, 0, W, H)
 
-  // Subtle grain
   ctx.save()
-  ctx.globalAlpha = 0.04
+  ctx.globalAlpha = 0.035
   for (let i = 0; i < 120; i++) {
-    const gx = (i * 97) % W
-    const gy = (i * 53) % H
     ctx.fillStyle = i % 2 === 0 ? '#000' : '#fff'
-    ctx.fillRect(gx, gy, 3, 3)
+    ctx.fillRect((i * 97) % W, (i * 53) % H, 3, 3)
   }
   ctx.restore()
-
-  // Soft vignette
-  const vig = ctx.createRadialGradient(W / 2, H * 0.45, 180, W / 2, H * 0.5, 700)
-  vig.addColorStop(0, 'rgba(0,0,0,0)')
-  vig.addColorStop(1, 'rgba(60, 45, 30, 0.12)')
-  ctx.fillStyle = vig
-  ctx.fillRect(0, 0, W, H)
 
   const pad = 48
   const record = `${result.wins}-${result.losses}${result.ties ? `-${result.ties}` : ''}`
   const diff = result.pointDiff >= 0 ? `+${result.pointDiff}` : `${result.pointDiff}`
 
-  // Header — brand left, score/record right
   if (logo) {
-    ctx.drawImage(logo, pad, 36, 56, 56)
+    ctx.drawImage(logo, pad, 32, 52, 52)
   }
   ctx.fillStyle = '#1c1917'
-  ctx.font = '800 36px "Barlow Condensed", Barlow, system-ui, sans-serif'
+  ctx.font = '800 34px "Barlow Condensed", Barlow, system-ui, sans-serif'
   ctx.textAlign = 'left'
-  ctx.fillText('POKEBALLERS', pad + 70, 58)
+  ctx.fillText('POKEBALLERS', pad + 66, 52)
   ctx.fillStyle = '#78716c'
-  ctx.font = '600 18px Barlow, system-ui, sans-serif'
-  ctx.fillText(`Daily  ·  ${result.dateKey}`, pad + 70, 84)
+  ctx.font = '600 17px Barlow, system-ui, sans-serif'
+  ctx.fillText(`Daily  ·  ${result.dateKey}`, pad + 66, 76)
 
-  // Score block (right)
+  // Score / record — performance summary
   ctx.textAlign = 'right'
   ctx.fillStyle = '#ea580c'
-  ctx.font = '800 92px "Barlow Condensed", Barlow, system-ui, sans-serif'
-  ctx.fillText(String(result.score), W - pad, 96)
+  ctx.font = '800 84px "Barlow Condensed", Barlow, system-ui, sans-serif'
+  ctx.fillText(String(result.score), W - pad, 88)
 
   ctx.fillStyle = '#1c1917'
-  ctx.font = '800 42px "Barlow Condensed", Barlow, system-ui, sans-serif'
-  ctx.fillText(record, W - pad, 142)
+  ctx.font = '800 38px "Barlow Condensed", Barlow, system-ui, sans-serif'
+  ctx.fillText(record, W - pad, 130)
 
   ctx.fillStyle = '#78716c'
-  ctx.font = '650 20px Barlow, system-ui, sans-serif'
-  ctx.fillText(`${shareHeadline(result)}  ·  ${diff}`, W - pad, 170)
+  ctx.font = '650 18px Barlow, system-ui, sans-serif'
+  ctx.fillText(`${shareHeadline(result)}  ·  ${diff}`, W - pad, 156)
   ctx.textAlign = 'left'
 
-  // Outcome strip under header
-  paintOutcomeStrip(ctx, result, pad, 112)
+  paintOutcomeStrip(ctx, result, pad, 100)
 
   if (result.slateMvp) {
     ctx.fillStyle = '#a16207'
-    ctx.font = '700 18px Barlow, system-ui, sans-serif'
+    ctx.font = '700 16px Barlow, system-ui, sans-serif'
     ctx.fillText(
       `MVP  ${result.slateMvp.name}  ·  ${result.slateMvp.blurb}`,
       pad,
-      168,
+      156,
     )
   }
 
-  // Party line — the visual hero
-  if (showTeam && lineup) {
-    await paintPartyLine(ctx, lineup, H * 0.38)
-  } else {
-    // Text fallback if no lineup
-    let y = 220
-    for (const g of result.games) {
-      ctx.fillStyle = '#1c1917'
-      ctx.font = '700 22px Barlow, system-ui, sans-serif'
-      ctx.fillText(
-        `${g.result.homeScore}–${g.result.awayScore}  ${g.stadium.name}`,
-        pad,
-        y,
-      )
-      y += 36
-    }
+  const spriteSize = 128
+
+  // ——— YOU ———
+  paintSideLabel(ctx, 'YOU', 198, 'you')
+  if (lineup) {
+    await paintPartyLine(ctx, lineup, {
+      cy: 220,
+      size: spriteSize,
+      chipFill: 'rgba(234, 88, 12, 0.92)',
+      chipText: '#fff',
+    })
+  }
+
+  // VS divider
+  const vsY = 420
+  ctx.strokeStyle = 'rgba(28, 25, 23, 0.12)'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(pad + 40, vsY)
+  ctx.lineTo(W / 2 - 50, vsY)
+  ctx.moveTo(W / 2 + 50, vsY)
+  ctx.lineTo(W - pad - 40, vsY)
+  ctx.stroke()
+
+  roundRect(ctx, W / 2 - 42, vsY - 16, 84, 32, 8)
+  ctx.fillStyle = '#1c1917'
+  ctx.fill()
+  ctx.fillStyle = '#fafafa'
+  ctx.font = '800 20px "Barlow Condensed", Barlow, system-ui, sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('VS', W / 2, vsY + 6)
+  ctx.textAlign = 'left'
+
+  // ——— CPU ———
+  paintSideLabel(ctx, 'CPU', 470, 'cpu')
+  if (cpuLineup) {
+    await paintPartyLine(ctx, cpuLineup, {
+      cy: 492,
+      size: spriteSize,
+      muted: true,
+      chipFill: 'rgba(68, 64, 60, 0.92)',
+      chipText: '#fafafa',
+    })
   }
 
   ctx.fillStyle = '#a8a29e'
-  ctx.font = '500 16px Barlow, system-ui, sans-serif'
+  ctx.font = '500 15px Barlow, system-ui, sans-serif'
   ctx.textAlign = 'center'
-  ctx.fillText('ryazlee.github.io/pokeballers', W / 2, H - 28)
+  ctx.fillText('ryazlee.github.io/pokeballers', W / 2, H - 26)
   ctx.textAlign = 'left'
 }
 
