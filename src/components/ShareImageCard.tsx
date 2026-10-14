@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Download, ImageIcon } from 'lucide-react'
+import { Download, ImageIcon, X } from 'lucide-react'
 import type { GauntletResult } from '../domain/daily'
 import {
   canvasToPngBlob,
@@ -16,10 +16,12 @@ type Props = {
 
 export default function ShareImageCard({ result, lineup, showTeam }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    if (!open) return
     const canvas = canvasRef.current
     if (!canvas) return
     let cancelled = false
@@ -30,14 +32,13 @@ export default function ShareImageCard({ result, lineup, showTeam }: Props) {
     return () => {
       cancelled = true
     }
-  }, [result, lineup, showTeam])
+  }, [open, result, lineup, showTeam])
 
   async function saveImage() {
     const canvas = canvasRef.current
-    if (!canvas || !ready) return
+    if (!canvas) return
     setBusy(true)
     try {
-      // Re-paint so export matches current toggle even if effect is mid-flight
       await paintShareImage(canvas, result, { showTeam, lineup })
       const blob = await canvasToPngBlob(canvas)
       await shareOrDownloadPng(blob, `pokeballers-${result.dateKey}.png`)
@@ -46,6 +47,21 @@ export default function ShareImageCard({ result, lineup, showTeam }: Props) {
     } finally {
       setBusy(false)
     }
+  }
+
+  if (!open) {
+    return (
+      <div className="share-image share-image--closed">
+        <button
+          type="button"
+          className="share-image__reveal"
+          onClick={() => setOpen(true)}
+        >
+          <ImageIcon size={15} strokeWidth={2} aria-hidden="true" />
+          Show shareable image
+        </button>
+      </div>
+    )
   }
 
   return (
@@ -59,19 +75,25 @@ export default function ShareImageCard({ result, lineup, showTeam }: Props) {
           aria-label="Shareable results image"
         />
       </div>
-      <button
-        type="button"
-        className="share-image__save"
-        disabled={!ready || busy}
-        onClick={() => void saveImage()}
-      >
-        {busy ? (
-          <ImageIcon size={15} strokeWidth={2} aria-hidden="true" />
-        ) : (
+      <div className="share-image__actions">
+        <button
+          type="button"
+          className="share-image__save"
+          disabled={!ready || busy}
+          onClick={() => void saveImage()}
+        >
           <Download size={15} strokeWidth={2} aria-hidden="true" />
-        )}
-        {busy ? 'Preparing…' : 'Save / share image'}
-      </button>
+          {busy ? 'Preparing…' : 'Save / share image'}
+        </button>
+        <button
+          type="button"
+          className="share-image__hide"
+          onClick={() => setOpen(false)}
+        >
+          <X size={15} strokeWidth={2} aria-hidden="true" />
+          Hide
+        </button>
+      </div>
     </div>
   )
 }

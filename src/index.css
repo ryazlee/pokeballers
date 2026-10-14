@@ -937,12 +937,18 @@ a {
   flex-direction: column;
   gap: 0.65rem;
   padding: 0.75rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.share-image--closed {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
 }
 
 .share-image__frame {
   border-radius: 8px;
   overflow: hidden;
-  background: #000;
+  background: #1a1410;
   border: 1px solid var(--border);
 }
 
@@ -953,7 +959,15 @@ a {
   vertical-align: top;
 }
 
-.share-image__save {
+.share-image__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.share-image__reveal,
+.share-image__save,
+.share-image__hide {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -970,8 +984,27 @@ a {
   cursor: pointer;
 }
 
-.share-image__save:hover:not(:disabled) {
+.share-image__reveal {
+  width: 100%;
+  background: color-mix(in srgb, var(--hoop) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--hoop) 35%, var(--border));
+  color: var(--text);
+}
+
+.share-image__reveal:hover,
+.share-image__save:hover:not(:disabled),
+.share-image__hide:hover {
   border-color: color-mix(in srgb, var(--text) 28%, var(--border));
+}
+
+.share-image__save {
+  flex: 1;
+  min-width: 10rem;
+}
+
+.share-image__hide {
+  color: var(--text-secondary);
+  font-weight: 550;
 }
 
 .share-image__save:disabled {
@@ -1012,9 +1045,22 @@ a {
   padding-left: 0;
 }
 
+.slate-box__table th:nth-child(2),
+.slate-box__table td:nth-child(2) {
+  text-align: left;
+}
+
 .slate-box__table th:last-child,
 .slate-box__table td:last-child {
   padding-right: 0;
+}
+
+.slate-box__pos {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  width: 2.25rem;
 }
 
 .slate-box__table th {

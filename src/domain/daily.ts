@@ -15,6 +15,7 @@ import {
   type Lineup,
   type PlayerBox,
   type Pokemon,
+  type RosterSlot,
   type SimResult,
 } from './types'
 
@@ -280,10 +281,35 @@ export function pickMvp(result: SimResult): GameMvp | null {
   }
 }
 
-export type SlateBoxLine = PlayerBox & { games: number }
+export type SlateBoxLine = PlayerBox & {
+  games: number
+  slot: RosterSlot | null
+}
+
+function slotLabel(slot: RosterSlot | null): string {
+  if (!slot) return '—'
+  if (slot === 'BENCH1') return 'B1'
+  if (slot === 'BENCH2') return 'B2'
+  return slot
+}
+
+export function formatSlotLabel(slot: RosterSlot | null): string {
+  return slotLabel(slot)
+}
+
+function slotForPokemon(lineup: Lineup | undefined, pokemonId: number): RosterSlot | null {
+  if (!lineup) return null
+  for (const slot of ALL_SLOTS) {
+    if (lineup[slot]?.pokemonId === pokemonId) return slot
+  }
+  return null
+}
 
 /** Aggregate your (home) box scores across the slate. */
-export function aggregateHomeBox(games: GauntletGame[]): SlateBoxLine[] {
+export function aggregateHomeBox(
+  games: GauntletGame[],
+  lineup?: Lineup,
+): SlateBoxLine[] {
   const totals = new Map<number, SlateBoxLine>()
 
   for (const g of games) {
@@ -297,18 +323,33 @@ export function aggregateHomeBox(games: GauntletGame[]): SlateBoxLine[] {
         prev.rebounds += b.rebounds
         prev.games += 1
       } else {
-        totals.set(b.pokemonId, { ...b, games: 1 })
+        totals.set(b.pokemonId, {
+          ...b,
+          games: 1,
+          slot: slotForPokemon(lineup, b.pokemonId),
+        })
       }
     }
   }
 
-  return [...totals.values()].sort((a, b) => boxImpact(b) - boxImpact(a))
+  const rows = [...totals.values()]
+  if (lineup) {
+    const order = new Map(ALL_SLOTS.map((s, i) => [s, i]))
+    rows.sort(
+      (a, b) =>
+        (a.slot ? (order.get(a.slot) ?? 99) : 99) -
+        (b.slot ? (order.get(b.slot) ?? 99) : 99),
+    )
+  } else {
+    rows.sort((a, b) => boxImpact(b) - boxImpact(a))
+  }
+  return rows
 }
 
 /** Best home player across the 7-game slate (totals). */
 export function pickSlateMvp(games: GauntletGame[]): GameMvp | null {
   const rows = aggregateHomeBox(games)
-  const best = rows[0]
+  const best = [...rows].sort((a, b) => boxImpact(b) - boxImpact(a))[0]
   if (!best || boxImpact(best) <= 0) return null
 
   return {

@@ -12,6 +12,7 @@ import {
   aggregateHomeBox,
   buildDailyChallenge,
   formatGauntletShare,
+  formatSlotLabel,
   runGauntlet,
   todayKey,
   type GauntletResult,
@@ -99,7 +100,7 @@ export default function DailyScreen() {
       showTeam: shareShowTeam,
       lineup,
     })
-    const slateBox = aggregateHomeBox(gauntlet.games)
+    const slateBox = aggregateHomeBox(gauntlet.games, lineup)
     return (
       <div className="app-shell">
         <AppHeader
@@ -152,51 +153,6 @@ export default function DailyScreen() {
                 ) : null}
               </section>
 
-              {slateBox.length > 0 ? (
-                <section className="slate-box">
-                  <p className="section-label">Your slate stats</p>
-                  <div className="slate-box__table-wrap">
-                    <table className="slate-box__table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Player</th>
-                          <th scope="col">PTS</th>
-                          <th scope="col">REB</th>
-                          <th scope="col">AST</th>
-                          <th scope="col">BLK</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {slateBox.map((row) => {
-                          const p = getPokemon(row.pokemonId)
-                          return (
-                            <tr key={row.pokemonId}>
-                              <td>
-                                <span className="slate-box__player">
-                                  {p ? (
-                                    <img
-                                      src={p.sprite}
-                                      alt=""
-                                      width={28}
-                                      height={28}
-                                    />
-                                  ) : null}
-                                  {row.name}
-                                </span>
-                              </td>
-                              <td>{row.points}</td>
-                              <td>{row.rebounds}</td>
-                              <td>{row.assists}</td>
-                              <td>{row.blocks}</td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              ) : null}
-
               <section className="share-card">
                 <div className="share-card__bar">
                   <button
@@ -227,13 +183,62 @@ export default function DailyScreen() {
                     </button>
                   </div>
                 </div>
+                <pre className="share-card__text">{share}</pre>
                 <ShareImageCard
                   result={gauntlet}
                   lineup={lineup}
                   showTeam={shareShowTeam}
                 />
-                <pre className="share-card__text">{share}</pre>
               </section>
+
+              {slateBox.length > 0 ? (
+                <section className="slate-box">
+                  <p className="section-label">Your slate stats</p>
+                  <div className="slate-box__table-wrap">
+                    <table className="slate-box__table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Pos</th>
+                          <th scope="col">Player</th>
+                          <th scope="col">PTS</th>
+                          <th scope="col">REB</th>
+                          <th scope="col">AST</th>
+                          <th scope="col">BLK</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {slateBox.map((row) => {
+                          const p = getPokemon(row.pokemonId)
+                          return (
+                            <tr key={row.pokemonId}>
+                              <td className="slate-box__pos">
+                                {formatSlotLabel(row.slot)}
+                              </td>
+                              <td>
+                                <span className="slate-box__player">
+                                  {p ? (
+                                    <img
+                                      src={p.sprite}
+                                      alt=""
+                                      width={28}
+                                      height={28}
+                                    />
+                                  ) : null}
+                                  {row.name}
+                                </span>
+                              </td>
+                              <td>{row.points}</td>
+                              <td>{row.rebounds}</td>
+                              <td>{row.assists}</td>
+                              <td>{row.blocks}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ) : null}
             </aside>
 
             <section className="gauntlet-list results-layout__main">
