@@ -139,16 +139,20 @@ function idleBob(t: number, phase: number) {
 function sceneAt(reel: HighlightReel, t: number): SceneState {
   const kind = reel.kind
   const shot = reel.shot ?? 'mid'
-  const isLayup = shot === 'paint' || shot === 'transition'
+  const finish = reel.finish
+  const isDunk = finish === 'dunk' || (finish == null && shot === 'paint' && /dunk/i.test(reel.caption))
+  const isLayup =
+    finish === 'layup' ||
+    (!isDunk && (shot === 'paint' || shot === 'transition'))
   const isThree = shot === 'three'
   const rightHoop = hoopOnRight(reel)
 
   // Spots relative to hoop at u≈0.92
   const hoopU = 0.92
-  const shootU = isLayup ? 0.72 : isThree ? 0.28 : 0.48
-  const shootV = isLayup ? 0.48 : isThree ? 0.42 : 0.46
-  const defU = shootU + 0.1
-  const defV = shootV + (isLayup ? 0.02 : 0.08)
+  const shootU = isDunk ? 0.62 : isLayup ? 0.7 : isThree ? 0.28 : 0.48
+  const shootV = isDunk || isLayup ? 0.48 : isThree ? 0.42 : 0.46
+  const defU = shootU + (isDunk ? 0.08 : 0.1)
+  const defV = shootV + (isDunk || isLayup ? 0.02 : 0.08)
 
   let star = pose(shootU, shootV, idleBob(t, 0))
   let foil: Pose | null = reel.foil
@@ -301,61 +305,130 @@ function sceneAt(reel: HighlightReel, t: number): SceneState {
     }
     focusU = hoopU - 0.1
     focusV = 0.5
-  } else if (isLayup) {
-    // Drive → gather → extend → finish
-    const drive = clamp((t - 1.15) / 0.7, 0, 1)
-    const gather = clamp((t - 1.75) / 0.35, 0, 1)
-    const extend = clamp((t - 2.1) / 0.55, 0, 1)
-    const finish = clamp((t - 2.55) / 0.4, 0, 1)
+  } else if (isDunk) {
+    // Approach → plant → explode above the rim → throw it down
+    const approach = clamp((t - 1.05) / 0.75, 0, 1)
+    const plant = clamp((t - 1.7) / 0.28, 0, 1)
+    const leap = clamp((t - 1.95) / 0.55, 0, 1)
+    const slam = clamp((t - 2.45) / 0.35, 0, 1)
 
     star = pose(
-      lerp(shootU - 0.12, hoopU - 0.08, easeInOut(Math.max(drive, extend * 0.5))),
-      lerp(shootV + 0.06, 0.48, drive),
-      extend > 0
-        ? easeOutBack(Math.min(extend, 1)) * 0.28
-        : gather > 0
-          ? -0.02
+      lerp(shootU - 0.18, hoopU - 0.05, easeInOut(Math.max(approach, leap * 0.65))),
+      lerp(shootV + 0.08, 0.5, approach),
+      leap > 0
+        ? easeOutBack(Math.min(leap, 1)) * 0.48
+        : plant > 0
+          ? -0.05 * plant
           : idleBob(t, 0),
-      gather > 0 && gather < 1
-        ? lerp(1, 1.15, Math.sin(gather * Math.PI))
-        : extend > 0.6
-          ? 0.9
-          : 1,
-      0.55,
-      0.2 + extend * 0.8,
+      plant > 0 && leap <= 0
+        ? lerp(1, 1.22, plant)
+        : leap > 0 && leap < 0.45
+          ? lerp(1.22, 0.82, leap / 0.45)
+          : slam > 0.4
+            ? 0.92
+            : 1,
+      0.7,
+      0.35 + leap * 0.85,
     )
 
     if (foil) {
       foil = pose(
-        lerp(defU, hoopU - 0.12, drive * 0.4),
+        lerp(defU, hoopU - 0.14, approach * 0.35),
+        defV + 0.04,
+        idleBob(t, 1.1),
+        1,
+        -0.25,
+        0.4,
+      )
+    }
+
+    // Ball rides with the dunker, then snaps through the rim from above
+    if (t >= 1.9 && t < 4.1) {
+      if (slam <= 0) {
+        ball = {
+          u: star.u + 0.04,
+          v: star.v - 0.02,
+          visible: 1,
+          z: 0.22 + star.hop * 0.9,
+        }
+      } else {
+        const p = easeInCubic(slam)
+        ball = {
+          u: lerp(star.u + 0.03, hoopU, p),
+          v: lerp(0.48, 0.5, p),
+          visible: p < 0.92 ? 1 : 1 - (p - 0.92) / 0.08,
+          z: lerp(0.55, 0.05, p),
+        }
+      }
+    }
+
+    if (slam > 0) {
+      net = clamp(slam / 0.3, 0, 1) * (1 - clamp((t - 4.35) / 0.4, 0, 1) * 0.25)
+      burst = clamp((t - 2.55) / 0.18, 0, 1) * (1 - clamp((t - 4.35) / 0.55, 0, 1))
+      spark = burst
+      flash = burst
+      scoreFlash = burst
+      showNextScore = t >= 2.7
+      zoom = 1.32 + burst * 0.08
+    }
+    focusU = lerp(shootU, hoopU - 0.04, Math.max(approach, leap))
+    focusV = 0.5
+  } else if (isLayup) {
+    // Drive → gather → float → soft kiss off the glass/rim
+    const drive = clamp((t - 1.1) / 0.7, 0, 1)
+    const gather = clamp((t - 1.7) / 0.32, 0, 1)
+    const floatUp = clamp((t - 2.0) / 0.5, 0, 1)
+    const kiss = clamp((t - 2.45) / 0.4, 0, 1)
+
+    star = pose(
+      lerp(shootU - 0.14, hoopU - 0.1, easeInOut(Math.max(drive, floatUp * 0.55))),
+      lerp(shootV + 0.07, 0.47, drive),
+      floatUp > 0
+        ? Math.sin(Math.min(floatUp, 1) * Math.PI) * 0.24
+        : gather > 0
+          ? -0.025
+          : idleBob(t, 0),
+      gather > 0 && floatUp <= 0
+        ? lerp(1, 1.14, Math.sin(gather * Math.PI))
+        : floatUp > 0.55
+          ? 0.94
+          : 1,
+      0.6,
+      0.25 + floatUp * 0.65,
+    )
+
+    if (foil) {
+      foil = pose(
+        lerp(defU, hoopU - 0.16, drive * 0.45),
         defV,
         idleBob(t, 1.1),
         1,
-        -0.15,
+        -0.2,
         0.35,
       )
     }
 
-    if (t >= 2.35 && t < 4.0) {
-      const p = clamp((t - 2.35) / 0.85, 0, 1)
+    if (t >= 2.25 && t < 4.05) {
+      const p = clamp((t - 2.25) / 0.95, 0, 1)
+      // Soft arc — rises with the floater, then drops in
       ball = {
-        u: lerp(star.u + 0.05, hoopU, easeInCubic(p)),
-        v: lerp(0.45, 0.5, p),
+        u: lerp(star.u + 0.05, hoopU - 0.01, easeInOut(p)),
+        v: lerp(0.46, 0.5, p),
         visible: p < 0.9 ? 1 : 1 - (p - 0.9) / 0.1,
-        z: 0.2 + Math.sin(p * Math.PI) * 0.22,
+        z: 0.18 + Math.sin(p * Math.PI) * 0.28,
       }
     }
 
-    if (finish > 0) {
-      net = clamp(finish / 0.35, 0, 1) * (1 - clamp((t - 4.4) / 0.4, 0, 1) * 0.3)
-      burst = clamp((t - 2.85) / 0.2, 0, 1) * (1 - clamp((t - 4.4) / 0.55, 0, 1))
-      spark = burst
-      flash = burst * 0.85
+    if (kiss > 0) {
+      net = clamp(kiss / 0.35, 0, 1) * (1 - clamp((t - 4.35) / 0.4, 0, 1) * 0.3)
+      burst = clamp((t - 2.7) / 0.2, 0, 1) * (1 - clamp((t - 4.35) / 0.55, 0, 1))
+      spark = burst * 0.85
+      flash = burst * 0.7
       scoreFlash = burst
-      showNextScore = t >= 3.0
-      zoom = 1.3 + burst * 0.05
+      showNextScore = t >= 2.85
+      zoom = 1.28 + burst * 0.05
     }
-    focusU = lerp(shootU, hoopU - 0.05, Math.max(drive, extend))
+    focusU = lerp(shootU, hoopU - 0.06, Math.max(drive, floatUp))
     focusV = 0.48
   } else {
     // Jump shot / three — crouch → explode → hang → release
@@ -1083,7 +1156,7 @@ export function paintCourtsideFrame(
   ctx.fill()
   ctx.fillStyle = '#fb923c'
   ctx.font = '800 13px "Barlow Condensed", sans-serif'
-  ctx.fillText(kindTitle(reel.kind), 28, 36)
+  ctx.fillText(kindTitle(reel.kind, reel.finish), 28, 36)
   ctx.fillStyle = '#e2e8f0'
   ctx.font = '600 13px Barlow, sans-serif'
   ctx.fillText(periodStamp(reel.quarter, reel.clock), 28, 54)
@@ -1117,7 +1190,7 @@ export function paintCourtsideFrame(
     ctx.textAlign = 'center'
     ctx.shadowColor = 'rgba(15, 23, 42, 0.65)'
     ctx.shadowBlur = 20
-    ctx.fillText(kindTitle(reel.kind), W / 2, H * 0.34)
+    ctx.fillText(kindTitle(reel.kind, reel.finish), W / 2, H * 0.34)
     ctx.shadowBlur = 0
     ctx.textAlign = 'left'
   }

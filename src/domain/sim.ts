@@ -244,11 +244,24 @@ function pointsFor(shot: ShotType): number {
   return shot === 'three' ? 3 : 2
 }
 
-function shotLabel(shot: ShotType): string {
+function shotLabel(
+  shot: ShotType,
+  shooter?: OnCourt,
+  rng?: () => number,
+): string {
   if (shot === 'three') return 'three'
   if (shot === 'mid') return 'mid-range jumper'
-  if (shot === 'paint') return 'paint finish'
-  return 'transition layup'
+  if (shot === 'transition') return 'layup'
+  // Paint: bigger / stronger finishers throw it down more often.
+  if (shooter && rng) {
+    const dunkChance = clamp(
+      0.22 + shooter.pokemon.height / 180 + shooter.pokemon.stats.atk / 450,
+      0.18,
+      0.72,
+    )
+    return rng() < dunkChance ? 'dunk' : 'layup'
+  }
+  return 'layup'
 }
 
 function drainStamina(side: Side): void {
@@ -497,6 +510,8 @@ export function simulateGame(
         : ''
     const matchupTag = typeEdgeTag(typeEdge)
 
+    const label = shotLabel(shot, shooter, rng)
+
     if (made) {
       const pts = pointsFor(shot)
       offense.score += pts
@@ -504,9 +519,9 @@ export function simulateGame(
       const passer = pickPasser(rng, offense.onCourt, shooter)
       if (passer) {
         bump(boxFor(offense), passer.pokemon.id, 'assists')
-        text = `${shooter.pokemon.name}${boosted} hits a ${shotLabel(shot)} over ${defender.pokemon.name} (+${pts}) · assist ${passer.pokemon.name}${matchupTag}`
+        text = `${shooter.pokemon.name}${boosted} hits a ${label} over ${defender.pokemon.name} (+${pts}) · assist ${passer.pokemon.name}${matchupTag}`
       } else {
-        text = `${shooter.pokemon.name}${boosted} hits a ${shotLabel(shot)} over ${defender.pokemon.name} (+${pts})${matchupTag}`
+        text = `${shooter.pokemon.name}${boosted} hits a ${label} over ${defender.pokemon.name} (+${pts})${matchupTag}`
       }
       possession = possession === 'home' ? 'away' : 'home'
     } else {
@@ -523,7 +538,7 @@ export function simulateGame(
       )
       if (rng() < blockChance) {
         bump(boxFor(defense), defender.pokemon.id, 'blocks')
-        text = `${defender.pokemon.name} blocks ${shooter.pokemon.name}'s ${shotLabel(shot)}${matchupTag}`
+        text = `${defender.pokemon.name} blocks ${shooter.pokemon.name}'s ${label}${matchupTag}`
         possession = possession === 'home' ? 'away' : 'home'
       } else {
         const board = reboundWinner(rng, offense.onCourt, defense.onCourt)
@@ -536,7 +551,7 @@ export function simulateGame(
             })),
           )
           bump(boxFor(offense), rebounder.pokemon.id, 'rebounds')
-          text = `${shooter.pokemon.name} misses the ${shotLabel(shot)} — ${rebounder.pokemon.name} tips it back${matchupTag}`
+          text = `${shooter.pokemon.name} misses the ${label} — ${rebounder.pokemon.name} tips it back${matchupTag}`
         } else {
           const rebounder = pickWeighted(
             rng,

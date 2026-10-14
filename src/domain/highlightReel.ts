@@ -18,6 +18,9 @@ export type ReelActor = {
 
 export type HighlightKind = 'make' | 'block' | 'board' | 'tip' | 'ot'
 
+/** How a scoring finish should animate. */
+export type FinishStyle = 'dunk' | 'layup' | 'jumper'
+
 export type HighlightReel = {
   stadiumName: string
   gameIndex: number
@@ -31,6 +34,7 @@ export type HighlightReel = {
   offenseSide: 'home' | 'away'
   kind: HighlightKind
   shot: ShotType | null
+  finish: FinishStyle | null
   points: number
   caption: string
   /** Shooter, or blocker on blocks. */
@@ -84,8 +88,17 @@ function findByName(
 function parseShot(text: string): ShotType | null {
   if (/three/.test(text)) return 'three'
   if (/mid-range|mid /.test(text)) return 'mid'
-  if (/paint/.test(text)) return 'paint'
+  if (/dunk|paint/.test(text)) return 'paint'
   if (/transition|layup/.test(text)) return 'transition'
+  return null
+}
+
+function parseFinish(text: string, shot: ShotType | null): FinishStyle | null {
+  if (/dunk/.test(text)) return 'dunk'
+  if (/layup|paint finish|transition/.test(text)) return 'layup'
+  if (shot === 'paint' || shot === 'transition') return 'layup'
+  if (shot === 'three' || shot === 'mid') return 'jumper'
+  if (/hits a |scores in overtime/.test(text)) return 'jumper'
   return null
 }
 
@@ -99,6 +112,8 @@ function dramaScore(play: PlayEvent, finalHome: number, finalAway: number): numb
   const t = play.text
   const pts = parsePoints(t)
   if (pts) score += pts * 14
+  if (/dunk/.test(t)) score += 18
+  if (/layup/.test(t)) score += 8
   if (/blocks/.test(t)) score += 28
   if (/tips it back/.test(t)) score += 18
   if (/boards it/.test(t)) score += 12
@@ -218,6 +233,7 @@ function buildFromPlay(
     prevAway: Math.max(0, prevAway),
     offenseSide,
     kind,
+    finish: parseFinish(body, shot),
     shot,
     points: points || (kind === 'ot' ? 2 : 0),
     caption,
@@ -343,6 +359,7 @@ export function reelFromHighlightLines(
     offenseSide: mvp.side,
     kind: 'make',
     shot: 'mid',
+    finish: 'jumper',
     points: 2,
     caption: `${mvp.name} takes over`,
     star: actorFromPokemon(p, mvp.side),
@@ -358,10 +375,15 @@ export function periodStamp(quarter: number, clock: string): string {
   return `Q${quarter} ${clock}`
 }
 
-export function kindTitle(kind: HighlightKind): string {
+export function kindTitle(
+  kind: HighlightKind,
+  finish?: FinishStyle | null,
+): string {
   if (kind === 'block') return 'REJECTED'
   if (kind === 'board') return 'BOARDS'
   if (kind === 'tip') return 'TIP-IN'
   if (kind === 'ot') return 'OVERTIME'
+  if (finish === 'dunk') return 'DUNK'
+  if (finish === 'layup') return 'LAYUP'
   return 'BUCKET'
 }

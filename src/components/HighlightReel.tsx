@@ -120,7 +120,9 @@ export default function HighlightReel({
               {featured ? 'Watch highlight reel' : 'Watch play'}
             </span>
             <span className="hl-reel__reveal-sub">
-              <span className="hl-reel__badge">{kindTitle(reel.kind)}</span>
+              <span className="hl-reel__badge">
+                {kindTitle(reel.kind, reel.finish)}
+              </span>
               <span>
                 G{reel.gameIndex + 1} · {periodStamp(reel.quarter, reel.clock)}
               </span>
@@ -138,11 +140,14 @@ export default function HighlightReel({
     <div
       className={`hl-reel${compact ? ' hl-reel--compact' : ''}${featured ? ' hl-reel--featured' : ''}`}
       data-kind={reel.kind}
+      data-finish={reel.finish ?? ''}
       data-shot={reel.shot ?? 'mid'}
     >
       <div className="hl-reel__chrome">
         <div className="hl-reel__eyebrow">
-          <span className="hl-reel__badge">{kindTitle(reel.kind)}</span>
+          <span className="hl-reel__badge">
+            {kindTitle(reel.kind, reel.finish)}
+          </span>
           <span className="hl-reel__meta">
             G{reel.gameIndex + 1} · {reel.stadiumName}
           </span>

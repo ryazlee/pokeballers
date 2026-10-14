@@ -2180,6 +2180,14 @@ html.theme-dark .half-court__frame {
   background: #7c3aed;
 }
 
+.hl-reel[data-finish='dunk'] .hl-reel__badge {
+  background: #dc2626;
+}
+
+.hl-reel[data-finish='layup'] .hl-reel__badge {
+  background: #2563eb;
+}
+
 .hl-reel__meta,
 .hl-reel__clock {
   font-size: 0.75rem;
