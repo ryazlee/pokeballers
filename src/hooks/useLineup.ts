@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { getPokemon } from '../domain/pokemon'
 import { canPlay, isOverCap, lineupBst, rateTeam } from '../domain/ratings'
 import {
   ALL_SLOTS,
@@ -55,14 +56,45 @@ export function useLineup(storageKey = STORAGE_KEY) {
         next[slot] = null
         return next
       }
-      // Remove from any other slot first
+
+      let fromSlot: RosterSlot | null = null
       for (const s of ALL_SLOTS) {
-        if (next[s]?.pokemonId === pokemonId) next[s] = null
+        if (next[s]?.pokemonId === pokemonId) {
+          fromSlot = s
+          break
+        }
       }
+
+      if (fromSlot === slot) return next
+
+      if (fromSlot != null) {
+        // Swap with the slot that already has this Pokémon
+        const displaced = next[slot]
+        next[slot] = { pokemonId }
+        next[fromSlot] = displaced
+        return next
+      }
+
+      const incoming = getPokemon(pokemonId)
+      if (!incoming) return next
+      const outgoingBst = next[slot]
+        ? (getPokemon(next[slot]!.pokemonId)?.bst ?? 0)
+        : 0
+      if (lineupBst(next) - outgoingBst + incoming.bst > BST_CAP) return next
+
       next[slot] = { pokemonId }
       return next
     })
   }, [])
+
+  const slotByPokemonId = useMemo(() => {
+    const map = new Map<number, RosterSlot>()
+    for (const s of ALL_SLOTS) {
+      const e = lineup[s]
+      if (e) map.set(e.pokemonId, s)
+    }
+    return map
+  }, [lineup])
 
   const clear = useCallback(() => setLineup(emptyLineup()), [])
 
@@ -77,6 +109,7 @@ export function useLineup(storageKey = STORAGE_KEY) {
     assign,
     clear,
     usedIds,
+    slotByPokemonId,
     bst,
     ratings,
     overCap,

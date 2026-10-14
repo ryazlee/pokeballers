@@ -45,9 +45,22 @@ export type ShotType = 'three' | 'mid' | 'paint' | 'transition'
 
 export type PlayEvent = {
   quarter: number
+  /** Game clock within the period, e.g. "8:42" or "0:15". */
+  clock: string
   text: string
   scoreHome: number
   scoreAway: number
+}
+
+/** Per-player box line for a finished game. */
+export type PlayerBox = {
+  pokemonId: number
+  name: string
+  side: 'home' | 'away'
+  points: number
+  assists: number
+  blocks: number
+  rebounds: number
 }
 
 export type SimResult = {
@@ -56,6 +69,7 @@ export type SimResult = {
   homeWon: boolean
   tied: boolean
   plays: PlayEvent[]
+  boxScore: PlayerBox[]
   homeRatings: TeamRatings
   awayRatings: TeamRatings
   seed: number
@@ -65,7 +79,14 @@ export const STARTER_SLOTS: Position[] = ['PG', 'SG', 'SF', 'PF', 'C']
 export const BENCH_SLOTS: BenchSlot[] = ['BENCH1', 'BENCH2']
 export const ALL_SLOTS: RosterSlot[] = [...STARTER_SLOTS, ...BENCH_SLOTS]
 
-export const BST_CAP = 3600
+/**
+ * ~429 avg across 7. With a stratified pool (elites + mid + cheap)
+ * you can splash 1–2 stars without being forced into the seven weakest.
+ */
+export const BST_CAP = 3000
+
+/** CPU salary — above the player cap so the slate stays a real fight. */
+export const CPU_BST_CAP = 3100
 
 export function emptyLineup(): Lineup {
   return {

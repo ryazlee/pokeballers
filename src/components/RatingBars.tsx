@@ -28,9 +28,9 @@ export default function RatingBars({ ratings, bst, cap, overCap }: RatingBarsPro
     <section className="rating-panel surface-card">
       <div className="bst-meter">
         <div className="rating-bar__meta">
-          <span className="section-label">BST budget</span>
+          <span className="section-label">Team grades</span>
           <span className={overCap ? 'bst-over' : undefined}>
-            {bst} / {cap}
+            BST {bst}/{cap}
           </span>
         </div>
         <div className="rating-bar__track" aria-hidden="true">
@@ -45,7 +45,7 @@ export default function RatingBars({ ratings, bst, cap, overCap }: RatingBarsPro
         <Bar label="Defense" value={ratings.defense} />
         <Bar label="Perimeter" value={ratings.perimeter} />
         <Bar label="Paint" value={ratings.paint} />
-        <Bar label="Playmaking" value={ratings.playmaking} />
+        <Bar label="Passing" value={ratings.playmaking} />
         <Bar label="Depth" value={ratings.depth} />
       </div>
     </section>

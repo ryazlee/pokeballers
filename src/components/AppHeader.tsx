@@ -21,8 +21,8 @@ export default function AppHeader({ title, subtitle, quiet, extra }: AppHeaderPr
                   className="brand__mark"
                   src={`${import.meta.env.BASE_URL}favicon.png`}
                   alt=""
-                  width={24}
-                  height={24}
+                  width={28}
+                  height={28}
                 />
                 <span>{title}</span>
               </Link>

@@ -1,6 +1,6 @@
 # Pokeballers
 
-All-5 Pokémon hoops: draft a 5-starter + 2-bench roster under a **3600 BST** cap, then autobattle.
+All-5 Pokémon hoops: draft a 5-starter + 2-bench roster under a **3000 BST** cap, then autobattle.
 
 ## Dev
 

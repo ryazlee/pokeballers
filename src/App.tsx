@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { ThemeProvider } from './theme'
 import { trackPageview } from './utils/analytics'
 import HomeScreen from './components/screens/HomeScreen'
-import BuilderScreen from './components/screens/BuilderScreen'
+import DailyScreen from './components/screens/DailyScreen'
 
 function getRouterBasename(): string {
   const base = import.meta.env.BASE_URL
@@ -27,8 +27,8 @@ export default function App() {
         <RouteAnalytics />
         <Routes>
           <Route path="/" element={<HomeScreen />} />
-          <Route path="/build" element={<BuilderScreen mode="sandbox" />} />
-          <Route path="/daily" element={<BuilderScreen mode="daily" />} />
+          <Route path="/daily" element={<DailyScreen />} />
+          <Route path="/build" element={<Navigate to="/daily" replace />} />
         </Routes>
       </BrowserRouter>
     </ThemeProvider>

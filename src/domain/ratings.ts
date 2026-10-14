@@ -1,3 +1,4 @@
+import { enduranceGrade } from './endurance'
 import { RATING, POSITION_WEIGHTS } from './weights'
 import { getPokemon } from './pokemon'
 import {
@@ -106,15 +107,21 @@ export function rateTeam(lineup: Lineup): TeamRatings {
 
     perimeterParts.push(periOff * 0.55 + periDef * 0.45)
     paintParts.push(paintOff * 0.55 + intDef * 0.45)
-    offenseParts.push(periOff * 0.5 + paintOff * 0.5 + fit * 0.15)
-    defenseParts.push(periDef * 0.5 + intDef * 0.5 + fit * 0.1)
+    offenseParts.push(periOff * 0.45 + paintOff * 0.4 + fit * 0.35)
+    defenseParts.push(periDef * 0.4 + intDef * 0.4 + fit * 0.35)
 
     if (slot === 'PG') {
-      playmaking = clamp(Math.round((spe * 1.1 + spa * 1.0) / 2.1), 1, 99)
+      // Attack carries passing; Speed the tempo.
+      playmaking = clamp(Math.round((atk * 1.15 + spe * 1.0) / 2.15), 1, 99)
     }
   }
 
+  const starterEndurance = starters.length
+    ? avg(starters.map(({ pokemon }) => enduranceGrade(pokemon)))
+    : 40
+
   const benchFits: number[] = []
+  const benchEnds: number[] = []
   for (const slot of BENCH_SLOTS) {
     const entry = lineup[slot]
     if (!entry) {
@@ -123,20 +130,43 @@ export function rateTeam(lineup: Lineup): TeamRatings {
     }
     const pokemon = getPokemon(entry.pokemonId)
     if (!pokemon) continue
-    // Flex: average fit across wing/big roles
-    const fit = avg([
-      positionFit(pokemon, 'SG'),
-      positionFit(pokemon, 'SF'),
-      positionFit(pokemon, 'PF'),
-    ])
+    // Flex: average fit across wing/big roles (integer grade, same as starters)
+    const fit = Math.round(
+      avg([
+        positionFit(pokemon, 'SG'),
+        positionFit(pokemon, 'SF'),
+        positionFit(pokemon, 'PF'),
+      ]),
+    )
     slotFits[slot] = fit
-    benchFits.push(fit * (1 - RATING.benchDepthHpWeight) + clamp(pokemon.stats.hp, 0, 180) * RATING.benchDepthHpWeight)
+    const end = enduranceGrade(pokemon)
+    benchEnds.push(end)
+    benchFits.push(
+      fit * (1 - RATING.benchDepthHpWeight) +
+        end * RATING.benchDepthHpWeight,
+    )
   }
 
-  const depth =
-    benchFits.length === 0
-      ? 25
-      : clamp(Math.round(avg(benchFits)), 1, 99)
+  // Empty / thin benches get punished; endurance is the only softener.
+  let depth: number
+  if (benchFits.length === 0) {
+    depth = clamp(Math.round(6 + starterEndurance * 0.18), 6, 28)
+  } else if (benchFits.length === 1) {
+    // One seat is playable but caps hard — maxing BST here shouldn't grade like a full seven.
+    depth = clamp(
+      Math.round(
+        avg(benchFits) * 0.55 + starterEndurance * 0.2 + avg(benchEnds) * 0.12,
+      ),
+      16,
+      58,
+    )
+  } else {
+    depth = clamp(
+      Math.round(avg(benchFits) * 0.78 + starterEndurance * 0.12 + avg(benchEnds) * 0.1),
+      1,
+      99,
+    )
+  }
 
   return {
     offense: clamp(Math.round(avg(offenseParts.length ? offenseParts : [40])), 1, 99),
