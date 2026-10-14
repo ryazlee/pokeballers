@@ -141,18 +141,28 @@ function sceneAt(reel: HighlightReel, t: number): SceneState {
   const shot = reel.shot ?? 'mid'
   const finish = reel.finish
   const isDunk = finish === 'dunk' || (finish == null && shot === 'paint' && /dunk/i.test(reel.caption))
+  const isHeave = finish === 'heave' || finish === 'buzzer'
+  const isBuzzer = finish === 'buzzer'
   const isLayup =
     finish === 'layup' ||
-    (!isDunk && (shot === 'paint' || shot === 'transition'))
-  const isThree = shot === 'three'
+    (!isDunk && !isHeave && (shot === 'paint' || shot === 'transition'))
+  const isThree = !isHeave && shot === 'three'
   const rightHoop = hoopOnRight(reel)
 
   // Spots relative to hoop at u≈0.92
   const hoopU = 0.92
-  const shootU = isDunk ? 0.62 : isLayup ? 0.7 : isThree ? 0.28 : 0.48
-  const shootV = isDunk || isLayup ? 0.48 : isThree ? 0.42 : 0.46
-  const defU = shootU + (isDunk ? 0.08 : 0.1)
-  const defV = shootV + (isDunk || isLayup ? 0.02 : 0.08)
+  const shootU = isHeave
+    ? 0.14
+    : isDunk
+      ? 0.62
+      : isLayup
+        ? 0.7
+        : isThree
+          ? 0.28
+          : 0.48
+  const shootV = isHeave ? 0.5 : isDunk || isLayup ? 0.48 : isThree ? 0.42 : 0.46
+  const defU = isHeave ? 0.55 : shootU + (isDunk ? 0.08 : 0.1)
+  const defV = isHeave ? 0.48 : shootV + (isDunk || isLayup ? 0.02 : 0.08)
 
   let star = pose(shootU, shootV, idleBob(t, 0))
   let foil: Pose | null = reel.foil
@@ -200,7 +210,56 @@ function sceneAt(reel: HighlightReel, t: number): SceneState {
     assist = pose(shootU - 0.1, shootV + 0.08, idleBob(t, 2), 1, 0.15)
   }
 
-  if (kind === 'block') {
+  if (kind === 'steal') {
+    // star = stealer, foil = ball-handler (no draw swap)
+    const probe = clamp((t - 1.1) / 0.55, 0, 1)
+    const poke = clamp((t - 1.65) / 0.4, 0, 1)
+    const breakout = clamp((t - 2.05) / 0.55, 0, 1)
+
+    star = pose(
+      lerp(defU + 0.06, shootU + 0.02, easeOutCubic(Math.max(probe, poke))),
+      lerp(defV, shootV, probe),
+      poke > 0 ? Math.sin(Math.min(poke, 1) * Math.PI) * 0.12 : idleBob(t, 0),
+      1,
+      -0.35,
+      0.4 + poke * 0.5,
+    )
+    if (foil) {
+      foil = pose(
+        shootU,
+        shootV,
+        idleBob(t, 1.1),
+        poke > 0.3 && poke < 0.9 ? 1.08 : 1,
+        0.15,
+        0.2,
+      )
+    }
+    if (t >= 1.5 && t < 3.4) {
+      if (poke < 1) {
+        ball = {
+          u: lerp(shootU, star.u, poke),
+          v: lerp(shootV - 0.04, star.v - 0.04, poke),
+          visible: 1,
+          z: 0.1,
+        }
+      } else {
+        ball = {
+          u: lerp(star.u, star.u - 0.12, breakout),
+          v: star.v,
+          visible: 1,
+          z: 0.08 + breakout * 0.06,
+        }
+      }
+    }
+    if (poke > 0.5) {
+      burst = clamp((poke - 0.5) / 0.4, 0, 1) * (1 - clamp((t - 3.2) / 0.55, 0, 1))
+      spark = burst * 0.8
+      flash = burst * 0.55
+      zoom = 1.26 + burst * 0.05
+    }
+    focusU = shootU
+    focusV = shootV
+  } else if (kind === 'block') {
     // motionStar = shooter, motionFoil = blocker (swapped at draw)
     const gather = clamp((t - 1.2) / 0.45, 0, 1)
     const rise = clamp((t - 1.65) / 0.55, 0, 1)
@@ -430,6 +489,56 @@ function sceneAt(reel: HighlightReel, t: number): SceneState {
     }
     focusU = lerp(shootU, hoopU - 0.06, Math.max(drive, floatUp))
     focusV = 0.48
+  } else if (isHeave) {
+    // Logo / half-court — gather deep, fling a moonshot arc
+    const crouch = clamp((t - 1.15) / 0.4, 0, 1)
+    const fling = clamp((t - 1.55) / 0.45, 0, 1)
+    const flight = clamp((t - 2.0) / 2.0, 0, 1)
+
+    star = pose(
+      shootU,
+      shootV,
+      fling > 0
+        ? Math.sin(Math.min(fling, 1) * Math.PI) * 0.2
+        : crouch > 0
+          ? -0.045 * crouch
+          : idleBob(t, 0),
+      crouch > 0 && fling <= 0
+        ? lerp(1, 1.2, crouch)
+        : fling > 0 && fling < 0.4
+          ? lerp(1.2, 0.88, fling / 0.4)
+          : 1,
+      0.35,
+      0.3 + fling * 0.7,
+    )
+
+    if (foil) {
+      foil = pose(defU, defV, idleBob(t, 1.1), 1, -0.05, 0.15)
+    }
+
+    if (t >= 1.85 && t < 4.4) {
+      const p = easeInOut(flight)
+      const arc = Math.sin(p * Math.PI)
+      ball = {
+        u: lerp(shootU + 0.03, hoopU, p),
+        v: lerp(shootV, 0.5, p),
+        visible: p < 0.94 ? 1 : 1 - (p - 0.94) / 0.06,
+        // High moon ball
+        z: 0.22 + arc * 0.72,
+      }
+      focusU = lerp(shootU, hoopU, p * 0.7)
+    }
+
+    if (flight > 0.88) {
+      net = clamp((flight - 0.88) / 0.12, 0, 1) * (1 - clamp((t - 4.5) / 0.4, 0, 1) * 0.3)
+      burst = clamp((t - 3.85) / 0.2, 0, 1) * (1 - clamp((t - 4.55) / 0.55, 0, 1))
+      spark = burst
+      flash = burst * (isBuzzer ? 1 : 0.85)
+      scoreFlash = burst
+      showNextScore = t >= 4.0
+      zoom = 1.22 + burst * 0.1
+    }
+    focusV = 0.5
   } else {
     // Jump shot / three — crouch → explode → hang → release
     const crouch = clamp((t - 1.25) / 0.4, 0, 1)

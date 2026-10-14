@@ -60,6 +60,7 @@ export type PlayerBox = {
   points: number
   assists: number
   blocks: number
+  steals: number
   rebounds: number
 }
 

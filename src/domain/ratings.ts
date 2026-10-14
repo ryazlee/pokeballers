@@ -7,6 +7,7 @@ import {
   BST_CAP,
   STARTER_SLOTS,
   type Lineup,
+  type PokemonStats,
   type Position,
   type Pokemon,
   type RosterSlot,
@@ -77,6 +78,37 @@ function avg(nums: number[]): number {
   return nums.reduce((a, b) => a + b, 0) / nums.length
 }
 
+/**
+ * How evenly spread the six base stats are.
+ * ~1.15 very balanced floor generals; ~0.6 hyper-specialists.
+ */
+function statBalanceMult(stats: PokemonStats): number {
+  const vals = [
+    stats.hp,
+    stats.atk,
+    stats.def,
+    stats.spa,
+    stats.spd,
+    stats.spe,
+  ]
+  const mean = avg(vals)
+  if (mean <= 0) return 1
+  const variance = avg(vals.map((v) => (v - mean) ** 2))
+  const cv = Math.sqrt(variance) / mean
+  return clamp(1.2 - cv * 1.35, 0.58, 1.18)
+}
+
+/**
+ * Individual playmaking: creation (Spe + Atk/SpA) × balance bonus.
+ * Balance helps, but a slow brick with flat stats still won't run the offense.
+ */
+export function playmakingScore(pokemon: Pokemon): number {
+  const { atk, spa, spe, spd } = pokemon.stats
+  const creation =
+    (spe * 1.2 + ((atk + spa) / 2) * 1.05 + spd * 0.25) / 2.5
+  return creation * statBalanceMult(pokemon.stats)
+}
+
 export function rateTeam(lineup: Lineup): TeamRatings {
   const slotFits: Partial<Record<RosterSlot, number>> = {}
   const starters: { slot: Position; pokemon: Pokemon; fit: number }[] = []
@@ -95,7 +127,7 @@ export function rateTeam(lineup: Lineup): TeamRatings {
   const paintParts: number[] = []
   const offenseParts: number[] = []
   const defenseParts: number[] = []
-  let playmaking = 40
+  const playParts: { score: number; weight: number }[] = []
 
   for (const { slot, pokemon, fit } of starters) {
     const { spa, atk, spe, def, spd, hp } = pokemon.stats
@@ -110,10 +142,21 @@ export function rateTeam(lineup: Lineup): TeamRatings {
     offenseParts.push(periOff * 0.45 + paintOff * 0.4 + fit * 0.35)
     defenseParts.push(periDef * 0.4 + intDef * 0.4 + fit * 0.35)
 
-    if (slot === 'PG') {
-      // Attack carries passing; Speed the tempo.
-      playmaking = clamp(Math.round((atk * 1.15 + spe * 1.0) / 2.15), 1, 99)
-    }
+    // Ball handlers carry playmaking; bigs still contribute a little.
+    const slotW =
+      slot === 'PG' ? 1.45 : slot === 'SG' ? 1.05 : slot === 'SF' ? 0.75 : 0.4
+    playParts.push({
+      score: playmakingScore(pokemon) * (0.85 + fit / 350),
+      weight: slotW,
+    })
+  }
+
+  let playmaking = 40
+  if (playParts.length) {
+    const tw = playParts.reduce((s, p) => s + p.weight, 0)
+    const raw =
+      playParts.reduce((s, p) => s + p.score * p.weight, 0) / Math.max(tw, 0.01)
+    playmaking = clamp(Math.round(raw), 1, 99)
   }
 
   const starterEndurance = starters.length

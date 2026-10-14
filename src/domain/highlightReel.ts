@@ -16,10 +16,10 @@ export type ReelActor = {
   sprite: string
 }
 
-export type HighlightKind = 'make' | 'block' | 'board' | 'tip' | 'ot'
+export type HighlightKind = 'make' | 'block' | 'steal' | 'board' | 'tip' | 'ot'
 
 /** How a scoring finish should animate. */
-export type FinishStyle = 'dunk' | 'layup' | 'jumper'
+export type FinishStyle = 'dunk' | 'layup' | 'jumper' | 'heave' | 'buzzer'
 
 export type HighlightReel = {
   stadiumName: string
@@ -86,6 +86,7 @@ function findByName(
 }
 
 function parseShot(text: string): ShotType | null {
+  if (/buzzer|half-court|half court|heave/.test(text)) return 'three'
   if (/three/.test(text)) return 'three'
   if (/mid-range|mid /.test(text)) return 'mid'
   if (/dunk|paint/.test(text)) return 'paint'
@@ -94,11 +95,13 @@ function parseShot(text: string): ShotType | null {
 }
 
 function parseFinish(text: string, shot: ShotType | null): FinishStyle | null {
+  if (/buzzer/.test(text)) return 'buzzer'
+  if (/half-court|half court|heave/.test(text)) return 'heave'
   if (/dunk/.test(text)) return 'dunk'
   if (/layup|paint finish|transition/.test(text)) return 'layup'
   if (shot === 'paint' || shot === 'transition') return 'layup'
   if (shot === 'three' || shot === 'mid') return 'jumper'
-  if (/hits a |scores in overtime/.test(text)) return 'jumper'
+  if (/hits a |scores in overtime|drains|banks/.test(text)) return 'jumper'
   return null
 }
 
@@ -112,8 +115,11 @@ function dramaScore(play: PlayEvent, finalHome: number, finalAway: number): numb
   const t = play.text
   const pts = parsePoints(t)
   if (pts) score += pts * 14
+  if (/buzzer/.test(t)) score += 55
+  if (/half-court|half court|heave/.test(t)) score += 40
   if (/dunk/.test(t)) score += 18
   if (/layup/.test(t)) score += 8
+  if (/steals it/.test(t)) score += 26
   if (/blocks/.test(t)) score += 28
   if (/tips it back/.test(t)) score += 18
   if (/boards it/.test(t)) score += 12
@@ -124,6 +130,7 @@ function dramaScore(play: PlayEvent, finalHome: number, finalAway: number): numb
   const secs = m * 60 + s
   if (play.quarter >= 4 && secs <= 60) score += 14
   if (play.quarter >= 4 && secs <= 24) score += 10
+  if (secs <= 3) score += 16
 
   const margin = Math.abs(play.scoreHome - play.scoreAway)
   if (margin <= 6) score += 12
@@ -165,19 +172,36 @@ function buildFromPlay(
   let foilName: string | null = null
   let assistName: string | null = null
 
+  const heaveHit = body.match(
+    /^(.+?)(?:\s*⚡)?\s+(?:drains|banks|hits|launches)\s+a\s+(?:buzzer-beater(?:\s+from half court)?|half-court heave)/i,
+  )
+  const heaveMiss = body.match(
+    /^(.+?)(?:'s)?\s+(?:buzzer-beater(?:\s+from half court)?|half-court heave|buzzer heave)/i,
+  )
   const hit = body.match(
     /^(.+?)(?:\s*⚡)?\s+hits a .+? over (.+?)(?:\s*\(\+\d+\))?(?:\s*·\s*assist\s+(.+?))?(?:\s*[·•].*)?$/,
   )
+  const steal = body.match(/^(.+?)\s+steals it from\s+(.+?)(?:\s*[·•].*)?$/)
   const block = body.match(/^(.+?)\s+blocks\s+(.+?)(?:'s|\s)/)
   const tip = body.match(/^(.+?)\s+misses the .+? — (.+?)\s+tips it back/)
   const board = body.match(/^(.+?)\s+misses — (.+?)\s+boards it/)
   const ot = body.match(/^(.+?)\s+scores in overtime/)
 
-  if (hit) {
+  if (heaveHit) {
+    kind = 'make'
+    starName = heaveHit[1]!.replace(/\s*⚡$/, '').trim()
+  } else if (heaveMiss && /misses|airs out/.test(body)) {
+    // Missed heaves rarely headline the reel — skip unless nothing else
+    return null
+  } else if (hit) {
     kind = 'make'
     starName = hit[1]!.replace(/\s*⚡$/, '').trim()
     foilName = hit[2]!.trim()
     assistName = hit[3]?.trim() ?? null
+  } else if (steal) {
+    kind = 'steal'
+    starName = steal[1]!.trim()
+    foilName = steal[2]!.trim()
   } else if (block) {
     kind = 'block'
     starName = block[1]!.trim()
@@ -258,7 +282,9 @@ export function buildHighlightReel(
   const boxes = result.boxScore ?? []
 
   const candidates = result.plays.filter((p) =>
-    /hits a |blocks |tips it back|boards it|scores in overtime/.test(p.text),
+    /hits a |drains a |banks a |steals it|blocks |tips it back|boards it|scores in overtime|buzzer-beater|half-court heave/.test(
+      p.text,
+    ),
   )
   const pool = candidates.length ? candidates : result.plays
   if (pool.length === 0) return null
@@ -306,7 +332,11 @@ export function reelFromHighlightLines(
     )
     if (!m) continue
     const body = m[5]!
-    if (!/hits a |blocks |tips it back|boards it|scores in overtime/.test(body)) {
+    if (
+      !/hits a |drains a |banks a |steals it|blocks |tips it back|boards it|scores in overtime|buzzer-beater|half-court heave/.test(
+        body,
+      )
+    ) {
       continue
     }
     const quarter = line.startsWith('OT') ? 5 : Number(m[1])
@@ -380,9 +410,12 @@ export function kindTitle(
   finish?: FinishStyle | null,
 ): string {
   if (kind === 'block') return 'REJECTED'
+  if (kind === 'steal') return 'STEAL'
   if (kind === 'board') return 'BOARDS'
   if (kind === 'tip') return 'TIP-IN'
   if (kind === 'ot') return 'OVERTIME'
+  if (finish === 'buzzer') return 'BUZZER'
+  if (finish === 'heave') return 'HEAVE'
   if (finish === 'dunk') return 'DUNK'
   if (finish === 'layup') return 'LAYUP'
   return 'BUCKET'

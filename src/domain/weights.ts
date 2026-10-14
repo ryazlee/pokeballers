@@ -32,6 +32,10 @@ export const SIM = {
   midBase: 0.42,
   paintBase: 0.52,
   transitionBase: 0.48,
+  /** Half-court / logo heaves — intentionally rare makes. */
+  heaveBase: 0.055,
+  /** Base steal look before Spe/SpD gap (perimeter pressure). */
+  stealBase: 0.07,
   /** Noise std used as ± fraction of the gap. */
   noiseScale: 12,
   /** Base stamina lost per possession before endurance multiplier. */
@@ -49,6 +53,12 @@ export const SIM = {
    */
   fitMultMin: 0.72,
   fitMultMax: 1.18,
+  /**
+   * Dex size baselines (PokéAPI: height dm, weight hg).
+   * ~15 dm / 600 hg ≈ average starter body.
+   */
+  heightBaseline: 15,
+  weightBaseline: 600,
 }
 
 export const RATING = {

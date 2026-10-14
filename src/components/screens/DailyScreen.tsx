@@ -215,6 +215,7 @@ export default function DailyScreen() {
                           <th scope="col">PTS</th>
                           <th scope="col">REB</th>
                           <th scope="col">AST</th>
+                          <th scope="col">STL</th>
                           <th scope="col">BLK</th>
                           <th scope="col" title="Share of production vs CPU at this spot">
                             vs
@@ -254,6 +255,7 @@ export default function DailyScreen() {
                               <td>{row.points}</td>
                               <td>{row.rebounds}</td>
                               <td>{row.assists}</td>
+                              <td>{row.steals ?? 0}</td>
                               <td>{row.blocks}</td>
                               <td className={`slate-box__pct${pctClass}`}>
                                 {pct != null ? `${pct}%` : '—'}

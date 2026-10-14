@@ -197,7 +197,9 @@ function pickHighlights(result: SimResult): string[] {
   const interesting = result.plays.filter(
     (p) =>
       /\(\+\d\)/.test(p.text) ||
-      /blocks|scores|boards|tips it back/.test(p.text),
+      /blocks|steals|scores|boards|tips it back|buzzer|half-court|heave|drains|banks/.test(
+        p.text,
+      ),
   )
   const pool = interesting.length >= 8 ? interesting : result.plays
 
@@ -236,11 +238,21 @@ function pickHighlights(result: SimResult): string[] {
   })
 }
 
-function boxImpact(b: Pick<PlayerBox, 'points' | 'assists' | 'blocks' | 'rebounds'>): number {
-  return b.points + b.assists * 2.8 + b.blocks * 3.6 + b.rebounds * 1.7
+function boxImpact(
+  b: Pick<PlayerBox, 'points' | 'assists' | 'blocks' | 'steals' | 'rebounds'>,
+): number {
+  return (
+    b.points +
+    b.assists * 2.8 +
+    b.blocks * 3.6 +
+    (b.steals ?? 0) * 3.4 +
+    b.rebounds * 1.7
+  )
 }
 
-function mvpBlurb(b: Pick<PlayerBox, 'points' | 'assists' | 'blocks' | 'rebounds'>): string {
+function mvpBlurb(
+  b: Pick<PlayerBox, 'points' | 'assists' | 'blocks' | 'steals' | 'rebounds'>,
+): string {
   const cats = [
     { n: b.points, w: b.points, label: `${b.points} pts` },
     {
@@ -252,6 +264,11 @@ function mvpBlurb(b: Pick<PlayerBox, 'points' | 'assists' | 'blocks' | 'rebounds
       n: b.blocks,
       w: b.blocks * 4.2,
       label: `${b.blocks} blk`,
+    },
+    {
+      n: b.steals ?? 0,
+      w: (b.steals ?? 0) * 3.8,
+      label: `${b.steals ?? 0} stl`,
     },
     {
       n: b.rebounds,
@@ -332,10 +349,15 @@ function aggregateSide(
         prev.points += b.points
         prev.assists += b.assists
         prev.blocks += b.blocks
+        prev.steals += b.steals ?? 0
         prev.rebounds += b.rebounds
         prev.games += 1
       } else {
-        totals.set(b.pokemonId, { ...b, games: 1 })
+        totals.set(b.pokemonId, {
+          ...b,
+          steals: b.steals ?? 0,
+          games: 1,
+        })
       }
     }
   }
@@ -519,6 +541,8 @@ export function pickSlateReel(
     const reel = resolveGameReel(g, i, homeLineup, cpuLineup)
     if (!reel) return
     let score = reel.points * 10
+    if (reel.finish === 'buzzer') score += 40
+    if (reel.finish === 'heave') score += 28
     if (reel.kind === 'block') score += 22
     if (reel.kind === 'ot') score += 30
     if (reel.quarter >= 4) score += 8
