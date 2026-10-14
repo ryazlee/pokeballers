@@ -1205,9 +1205,6 @@ a {
     gap: 1rem;
   }
 
-  .half-court {
-    min-height: 460px;
-  }
 }
 
 /* ——— Ratings ——— */
@@ -1270,7 +1267,10 @@ a {
 
 .half-court {
   position: relative;
-  min-height: 360px;
+  /* ~50×47 half-court proportion */
+  aspect-ratio: 50 / 47;
+  width: 100%;
+  min-height: 0;
   border-radius: var(--radius-lg);
   overflow: visible;
   isolation: isolate;
@@ -1292,32 +1292,32 @@ a {
   inset: 0;
   background:
     radial-gradient(
-      ellipse 80% 55% at 50% 100%,
-      color-mix(in srgb, #2a1c10 18%, transparent),
-      transparent 70%
+      ellipse 70% 50% at 50% 88%,
+      color-mix(in srgb, #2a1c10 16%, transparent),
+      transparent 65%
     ),
     repeating-linear-gradient(
-      92deg,
-      #c9a06a 0 11px,
-      #b8894f 11px 22px,
-      #d0a875 22px 33px,
-      #b07d45 33px 44px
+      90deg,
+      #c9a06a 0 12px,
+      #b8894f 12px 24px,
+      #d0a875 24px 36px,
+      #b07d45 36px 48px
     );
 }
 
 html.theme-dark .half-court__wood {
   background:
     radial-gradient(
-      ellipse 80% 55% at 50% 100%,
-      color-mix(in srgb, #000 35%, transparent),
-      transparent 70%
+      ellipse 70% 50% at 50% 88%,
+      color-mix(in srgb, #000 32%, transparent),
+      transparent 65%
     ),
     repeating-linear-gradient(
-      92deg,
-      #5a4330 0 11px,
-      #473524 11px 22px,
-      #624a35 22px 33px,
-      #3f2f21 33px 44px
+      90deg,
+      #5a4330 0 12px,
+      #473524 12px 24px,
+      #624a35 24px 36px,
+      #3f2f21 36px 48px
     );
 }
 
@@ -1326,18 +1326,18 @@ html.theme-dark .half-court__wood {
   inset: 0;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, #fff 12%, transparent) 0%,
-    transparent 28%,
-    color-mix(in srgb, #1a120a 16%, transparent) 100%
+    color-mix(in srgb, #fff 10%, transparent) 0%,
+    transparent 22%,
+    color-mix(in srgb, #1a120a 14%, transparent) 100%
   );
 }
 
 html.theme-dark .half-court__vignette {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, #fff 6%, transparent) 0%,
-    transparent 30%,
-    color-mix(in srgb, #000 28%, transparent) 100%
+    color-mix(in srgb, #fff 5%, transparent) 0%,
+    transparent 24%,
+    color-mix(in srgb, #000 26%, transparent) 100%
   );
 }
 
@@ -1346,154 +1346,12 @@ html.theme-dark .half-court__frame {
   box-shadow: inset 0 0 0 4px color-mix(in srgb, #1a120a 70%, transparent);
 }
 
-.half-court__sideline {
+.half-court__svg {
   position: absolute;
-  top: 5%;
-  bottom: 4%;
-  width: 2px;
-  background: var(--court-line);
-}
-
-.half-court__sideline--left {
-  left: 5%;
-}
-
-.half-court__sideline--right {
-  right: 5%;
-}
-
-.half-court__baseline {
-  position: absolute;
-  left: 5%;
-  right: 5%;
-  bottom: 4%;
-  height: 2px;
-  background: var(--court-line);
-}
-
-.half-court__paint {
-  position: absolute;
-  left: 50%;
-  bottom: 4%;
-  transform: translateX(-50%);
-  width: 36%;
-  height: 38%;
-  border: 2.5px solid var(--court-line);
-  border-bottom: none;
-  border-radius: 3px 3px 0 0;
-  background: color-mix(in srgb, #8b5a2b 10%, transparent);
-}
-
-.half-court__lane-hash {
-  position: absolute;
-  bottom: calc(4% + 10%);
-  width: 10px;
-  height: 2px;
-  background: var(--court-line);
-}
-
-.half-court__lane-hash--l {
-  left: calc(50% - 18% - 10px);
-}
-
-.half-court__lane-hash--r {
-  right: calc(50% - 18% - 10px);
-}
-
-.half-court__ft {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4% + 38%);
-  transform: translate(-50%, 50%);
-  width: 24%;
-  aspect-ratio: 2 / 1;
-  border: 2.5px solid var(--court-line);
-  border-bottom: none;
-  border-radius: 999px 999px 0 0;
-}
-
-.half-court__key {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4% + 26%);
-  transform: translateX(-50%);
-  width: 19%;
-  aspect-ratio: 1;
-  border: 2.5px solid var(--court-line);
-  border-radius: 999px;
-}
-
-.half-court__arc {
-  position: absolute;
-  left: 50%;
-  bottom: 2%;
-  transform: translateX(-50%);
-  width: 84%;
-  height: 60%;
-  border: 2.5px solid var(--court-line);
-  border-radius: 999px 999px 0 0;
-  border-bottom: none;
-}
-
-.half-court__corner {
-  position: absolute;
-  bottom: 4%;
-  width: 14%;
-  height: 22%;
-  border: 2.5px solid color-mix(in srgb, var(--court-line) 70%, transparent);
-  border-bottom: none;
-}
-
-.half-court__corner--l {
-  left: 5%;
-  border-right: none;
-  border-radius: 0 999px 0 0;
-}
-
-.half-court__corner--r {
-  right: 5%;
-  border-left: none;
-  border-radius: 999px 0 0 0;
-}
-
-/* Basket on the baseline (bottom middle) — net hangs into the paint. */
-.half-court__backboard {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4% - 1px);
-  transform: translateX(-50%);
-  width: 48px;
-  height: 4px;
-  border-radius: 2px;
-  background: color-mix(in srgb, #f8fafc 85%, #94a3b8);
-  z-index: 1;
-}
-
-.half-court__hoop {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4% + 5px);
-  transform: translateX(-50%);
-  width: 22px;
-  height: 22px;
-  border: 3px solid var(--hoop);
-  border-radius: 999px;
-  background: transparent;
-  z-index: 2;
-}
-
-.half-court__net {
-  position: absolute;
-  left: 50%;
-  bottom: calc(4% + 24px);
-  transform: translateX(-50%);
-  width: 16px;
-  height: 14px;
-  border: 1.5px solid color-mix(in srgb, #fff 55%, transparent);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
-  opacity: 0.75;
-  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .court-slot {
@@ -1520,6 +1378,7 @@ html.theme-dark .half-court__frame {
   transform: translateY(-1px);
 }
 
+.court-slot--pg:hover,
 .court-slot--sf:hover {
   transform: translateX(-50%) translateY(-1px);
 }
@@ -1598,30 +1457,31 @@ html.theme-dark .half-court__frame {
   color: var(--tag-muted);
 }
 
+/* Positions mapped onto top-down half court (baseline / rim at bottom). */
 .court-slot--pg {
-  left: 8%;
-  top: 18%;
-}
-
-.court-slot--sg {
-  right: 8%;
-  top: 18%;
-}
-
-.court-slot--sf {
   left: 50%;
-  top: 8%;
+  top: 14%;
   transform: translateX(-50%);
 }
 
+.court-slot--sg {
+  right: 6%;
+  top: 28%;
+}
+
+.court-slot--sf {
+  left: 6%;
+  top: 28%;
+}
+
 .court-slot--pf {
-  left: 14%;
-  bottom: 10%;
+  left: 10%;
+  bottom: 18%;
 }
 
 .court-slot--c {
-  right: 14%;
-  bottom: 10%;
+  right: 10%;
+  bottom: 14%;
 }
 
 .bench-row {
@@ -2302,7 +2162,6 @@ html.theme-dark .play-team--cpu {
   }
 
   .half-court {
-    min-height: 320px;
     border-radius: 10px;
   }
 
@@ -2418,27 +2277,28 @@ html.theme-dark .play-team--cpu {
     height: 40px;
   }
 
-  .half-court {
-    min-height: 290px;
-  }
-
   .court-slot--pg {
-    left: 4%;
-    top: 16%;
+    left: 50%;
+    top: 12%;
   }
 
   .court-slot--sg {
-    right: 4%;
-    top: 16%;
+    right: 2%;
+    top: 26%;
+  }
+
+  .court-slot--sf {
+    left: 2%;
+    top: 26%;
   }
 
   .court-slot--pf {
-    left: 10%;
-    bottom: 8%;
+    left: 6%;
+    bottom: 16%;
   }
 
   .court-slot--c {
-    right: 10%;
-    bottom: 8%;
+    right: 6%;
+    bottom: 12%;
   }
 }

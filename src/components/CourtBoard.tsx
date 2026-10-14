@@ -7,6 +7,7 @@ import {
   type RosterSlot,
   type TeamRatings,
 } from '../domain/types'
+import HalfCourtSvg from './HalfCourtSvg'
 import PokemonHoverCard from './PokemonHoverCard'
 
 type CourtBoardProps = {
@@ -87,20 +88,7 @@ export default function CourtBoard({
         <div className="half-court__frame" aria-hidden="true">
           <div className="half-court__wood" />
           <div className="half-court__vignette" />
-          <div className="half-court__sideline half-court__sideline--left" />
-          <div className="half-court__sideline half-court__sideline--right" />
-          <div className="half-court__baseline" />
-          <div className="half-court__paint" />
-          <div className="half-court__lane-hash half-court__lane-hash--l" />
-          <div className="half-court__lane-hash half-court__lane-hash--r" />
-          <div className="half-court__ft" />
-          <div className="half-court__key" />
-          <div className="half-court__arc" />
-          <div className="half-court__corner half-court__corner--l" />
-          <div className="half-court__corner half-court__corner--r" />
-          <div className="half-court__backboard" />
-          <div className="half-court__hoop" />
-          <div className="half-court__net" />
+          <HalfCourtSvg />
         </div>
         {STARTER_SLOTS.map((slot) => (
           <SlotButton
