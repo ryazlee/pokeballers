@@ -688,11 +688,11 @@ export function simulateGame(
       : shotLabel(shot, shooter, rng)
 
     // Steal check before the shot (not on heaves — those are desperation flings)
-    let stolen = false
+    let stealer: OnCourt | null = null
     if (!isHeave) {
-      const stealer = pickStealer(rng, defense.onCourt, stadium)
+      const candidate = pickStealer(rng, defense.onCourt, stadium)
       const stealGap =
-        stealRating(stealer, stadium) * defForm -
+        stealRating(candidate, stadium) * defForm -
         handleRating(shooter, stadium) * offForm
       const perimeter =
         shot === 'transition' ? 0.045 : shot === 'three' || shot === 'mid' ? 0.02 : -0.025
@@ -704,16 +704,13 @@ export function simulateGame(
         0.025,
         0.2,
       )
-      if (rng() < stealChance) {
-        stolen = true
-        bump(boxFor(defense), stealer.pokemon.id, 'steals')
-        text = `${stealer.pokemon.name} steals it from ${shooter.pokemon.name}${matchupTag}`
-        possession = possession === 'home' ? 'away' : 'home'
-      }
+      if (rng() < stealChance) stealer = candidate
     }
 
-    if (stolen) {
-      // already set text + possession
+    if (stealer) {
+      bump(boxFor(defense), stealer.pokemon.id, 'steals')
+      text = `${stealer.pokemon.name} steals it from ${shooter.pokemon.name}${matchupTag}`
+      possession = possession === 'home' ? 'away' : 'home'
     } else if (isHeave) {
       if (made) {
         const pts = 3
