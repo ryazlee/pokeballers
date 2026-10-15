@@ -1,13 +1,12 @@
 /**
- * Top-down offensive end (feet as viewBox units).
- * Cropped just above the 3-point arc — baseline / rim at bottom.
+ * Top-down NBA half-court (feet as viewBox units).
+ * Baseline at bottom; rim inset from baseline; half-court line at top.
  */
 export default function HalfCourtSvg() {
-  // Full half-court is 50×47; we show y=15.5→47 (just above the arc).
   return (
     <svg
       className="half-court__svg"
-      viewBox="0 15.5 50 31.5"
+      viewBox="0 0 50 47"
       preserveAspectRatio="xMidYMid meet"
       aria-hidden="true"
     >
@@ -18,8 +17,11 @@ export default function HalfCourtSvg() {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        {/* Sidelines + baseline (no midcourt line in this crop) */}
-        <path d="M 0.5 15.5 V 46.5 H 49.5 V 15.5" />
+        {/* Boundary */}
+        <rect x="0.5" y="0.5" width="49" height="46" />
+
+        {/* Center circle stub at midcourt */}
+        <path d="M 19 0.5 A 6 6 0 0 0 31 0.5" />
 
         {/* Paint / key */}
         <rect
@@ -43,7 +45,7 @@ export default function HalfCourtSvg() {
         {/* Restricted area */}
         <path d="M 21 41.75 A 4 4 0 0 1 29 41.75" />
 
-        {/* 3-point line */}
+        {/* 3-point: corner straights + arc from basket (25, 41.75) r≈23.75 */}
         <path d="M 3 46.5 V 32.8" />
         <path d="M 47 46.5 V 32.8" />
         <path d="M 3 32.8 A 23.75 23.75 0 0 1 47 32.8" />
@@ -59,7 +61,7 @@ export default function HalfCourtSvg() {
           strokeLinecap="butt"
         />
 
-        {/* Rim */}
+        {/* Rim (top-down) */}
         <circle
           cx="25"
           cy="41.75"
