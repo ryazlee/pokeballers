@@ -206,19 +206,29 @@ export default function DailyScreen() {
 
               {slateBox.length > 0 ? (
                 <section className="slate-box">
-                  <p className="section-label">Your slate stats</p>
+                  <div className="slate-box__head">
+                    <p className="section-label">Slate stats</p>
+                    <p className="slate-box__legend" aria-hidden="true">
+                      <span className="slate-box__legend-you">You</span>
+                      <span className="slate-box__legend-cpu">CPU</span>
+                    </p>
+                  </div>
                   <div className="slate-box__table-wrap">
                     <table className="slate-box__table">
                       <thead>
                         <tr>
                           <th scope="col">Pos</th>
-                          <th scope="col">Player</th>
+                          <th scope="col">You</th>
+                          <th scope="col">CPU</th>
                           <th scope="col">PTS</th>
                           <th scope="col">REB</th>
                           <th scope="col">AST</th>
                           <th scope="col">STL</th>
                           <th scope="col">BLK</th>
-                          <th scope="col" title="Share of production vs CPU at this spot">
+                          <th
+                            scope="col"
+                            title="Share of production vs CPU at this spot"
+                          >
                             vs
                           </th>
                         </tr>
@@ -226,6 +236,9 @@ export default function DailyScreen() {
                       <tbody>
                         {slateBox.map((row) => {
                           const p = getPokemon(row.pokemonId)
+                          const opp = row.opponent
+                            ? getPokemon(row.opponent.pokemonId)
+                            : null
                           const pct = row.matchupPct
                           const pctClass =
                             pct == null
@@ -253,11 +266,53 @@ export default function DailyScreen() {
                                   {row.name}
                                 </span>
                               </td>
-                              <td>{row.points}</td>
-                              <td>{row.rebounds}</td>
-                              <td>{row.assists}</td>
-                              <td>{row.steals ?? 0}</td>
-                              <td>{row.blocks}</td>
+                              <td>
+                                {row.opponent ? (
+                                  <span className="slate-box__player slate-box__player--cpu">
+                                    {opp ? (
+                                      <img
+                                        src={opp.sprite}
+                                        alt=""
+                                        width={28}
+                                        height={28}
+                                      />
+                                    ) : null}
+                                    {row.opponent.name}
+                                  </span>
+                                ) : (
+                                  <span className="slate-box__empty">—</span>
+                                )}
+                              </td>
+                              <td>
+                                <span className="slate-box__duel">
+                                  <span>{row.points}</span>
+                                  <span>{row.opponent?.points ?? '—'}</span>
+                                </span>
+                              </td>
+                              <td>
+                                <span className="slate-box__duel">
+                                  <span>{row.rebounds}</span>
+                                  <span>{row.opponent?.rebounds ?? '—'}</span>
+                                </span>
+                              </td>
+                              <td>
+                                <span className="slate-box__duel">
+                                  <span>{row.assists}</span>
+                                  <span>{row.opponent?.assists ?? '—'}</span>
+                                </span>
+                              </td>
+                              <td>
+                                <span className="slate-box__duel">
+                                  <span>{row.steals ?? 0}</span>
+                                  <span>{row.opponent?.steals ?? '—'}</span>
+                                </span>
+                              </td>
+                              <td>
+                                <span className="slate-box__duel">
+                                  <span>{row.blocks}</span>
+                                  <span>{row.opponent?.blocks ?? '—'}</span>
+                                </span>
+                              </td>
                               <td className={`slate-box__pct${pctClass}`}>
                                 {pct != null ? `${pct}%` : '—'}
                               </td>

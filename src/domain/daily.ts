@@ -305,6 +305,16 @@ export function pickMvp(result: SimResult): GameMvp | null {
   }
 }
 
+export type SlateOpponentLine = {
+  pokemonId: number
+  name: string
+  points: number
+  rebounds: number
+  assists: number
+  steals: number
+  blocks: number
+}
+
 export type SlateBoxLine = PlayerBox & {
   games: number
   slot: RosterSlot | null
@@ -313,6 +323,8 @@ export type SlateBoxLine = PlayerBox & {
    * 50 = even; higher = you won the matchup.
    */
   matchupPct: number | null
+  /** CPU player at the same roster slot, if any. */
+  opponent: SlateOpponentLine | null
 }
 
 function slotLabel(slot: RosterSlot | null): string {
@@ -397,7 +409,18 @@ export function aggregateHomeBox(
       cpu != null
         ? matchupPercent(boxImpact(row), boxImpact(cpu))
         : null
-    rows.push({ ...row, slot, matchupPct })
+    const opponent: SlateOpponentLine | null = cpu
+      ? {
+          pokemonId: cpu.pokemonId,
+          name: cpu.name,
+          points: cpu.points,
+          rebounds: cpu.rebounds,
+          assists: cpu.assists,
+          steals: cpu.steals ?? 0,
+          blocks: cpu.blocks,
+        }
+      : null
+    rows.push({ ...row, slot, matchupPct, opponent })
   }
 
   if (lineup) {
